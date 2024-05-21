@@ -129,7 +129,7 @@ Resources:
         - subnet-0de15e1a367613521
         - subnet-0fe0d75d1f9673051
       SecurityGroups:
-        - sg-0cc21867f8284a16f
+        - sg-0aebf96e805f15b59
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -200,7 +200,7 @@ Resources:
             - subnet-0de15e1a367613521
             - subnet-0fe0d75d1f9673051
           SecurityGroups:
-            - sg-0cc21867f8284a16f
+            - sg-0aebf96e805f15b59
       LoadBalancers:
         - TargetGroupArn: !Ref TargetGroup
           ContainerName: !Sub marble-ecs-container-${STAGE}
