@@ -1,0 +1,207 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  STAGE:
+    Type: String
+    Description: The environment for the stack (dev, staging, prod)
+  DBHOST:
+    Type: String
+    Description: Database host
+  DBUSERNAME:
+    Type: String
+    Description: Database username
+  DBPASSWORD:
+    Type: String
+    Description: Database password
+  JWTSECRET:
+    Type: String
+    Description: Jwt secret
+  ASSETSBUCKETNAME:
+    Type: String
+    Description: Assets Bucket Name
+  AWSACCESSKEY:
+    Type: String
+    Description: AWS Access key
+  AWSSECRETACCESSKEY:
+    Type: String
+    Description: AWS Secret key
+  SERVERCOUNT:
+    Type: Number
+    Description: Minimum Number of Server Running
+  LBCERTIFICATE:
+    Type: String
+    Description: ARN For Certificate to use with Load Balancer
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub marble-ecr-${STAGE}
+
+  ECSCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      ClusterName: !Sub marble-ecs-cluster-${STAGE}
+
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /ecs/marble-api-${STAGE}
+
+  ECSTaskExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub ecs-execution-role-${STAGE}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
+  APITaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub marble-task-definition-${STAGE}
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      Cpu: 1024
+      Memory: 3072
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: !Sub marble-ecs-container-${STAGE}
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/marble-ecr-${STAGE}:latest
+          Cpu: 0
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3004
+              Protocol: tcp
+              AppProtocol: http
+              Name: !Sub marble-task-definition-tcp-3004-${STAGE}
+          Environment:
+            - Name: DB_NAME
+              Value: marble
+            - Name: DB_PORT
+              Value: 5432
+            - Name: DB_HOST
+              Value: !Ref DBHOST
+            - Name: DB_USERNAME
+              Value: !Ref DBUSERNAME
+            - Name: DB_PASSWORD
+              Value: !Ref DBPASSWORD
+            - Name: JWT_SECRET
+              Value: !Ref JWTSECRET
+            - Name: ASSETS_BUCKET_NAME
+              Value: !Ref ASSETSBUCKETNAME
+            - Name: AWS_ACCESS_KEY
+              Value: !Ref AWSACCESSKEY
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !Ref AWSSECRETACCESSKEY
+            - Name: EMAIL_SENDER_ID
+              Value: support@marblels.com
+            - Name: AWS_REGION
+              Value: us-east-1
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-create-group: true
+              awslogs-group: !Sub /ecs/marble-api-${STAGE}
+              awslogs-region: !Sub ${AWS::Region}
+              awslogs-stream-prefix: ecs
+              awslogs-datetime-format: "%Y-%m-%d %H:%M:%S%L"
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub marble-load-balancer-${STAGE}
+      Subnets:
+        - subnet-0267fd77d34334471
+        - subnet-04e111ba12d27bfcd
+        - subnet-08943f65b730fd0a0
+        - subnet-03eb57b36a093c974
+        - subnet-0de15e1a367613521
+        - subnet-0fe0d75d1f9673051
+      SecurityGroups:
+        - sg-0cc21867f8284a16f
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub marble-target-group-${STAGE}
+      Port: 3004
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: vpc-0289e05ea16e95a6b
+      HealthCheckEnabled: true
+      HealthCheckPath: /health
+
+  HTTPSLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: LoadBalancer
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Certificates:
+        - CertificateArn: !Ref LBCERTIFICATE
+      Port: 443
+      Protocol: HTTPS
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  HTTPLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: LoadBalancer
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: "HTTPS"
+            Port: 443
+            Host: "#{host}"
+            Path: "/#{path}"
+            Query: "#{query}"
+            StatusCode: "HTTP_301"
+
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: 
+      - APITaskDefinition
+      - LoadBalancer
+    Properties:
+      ServiceName: !Sub marble-ecs-api-service-${STAGE}
+      Cluster: !Ref ECSCluster
+      LaunchType: FARGATE
+      TaskDefinition: !Ref APITaskDefinition
+      DesiredCount: !Ref SERVERCOUNT
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - subnet-0267fd77d34334471
+            - subnet-04e111ba12d27bfcd
+            - subnet-08943f65b730fd0a0
+            - subnet-03eb57b36a093c974
+            - subnet-0de15e1a367613521
+            - subnet-0fe0d75d1f9673051
+          SecurityGroups:
+            - sg-0cc21867f8284a16f
+      LoadBalancers:
+        - TargetGroupArn: !Ref TargetGroup
+          ContainerName: !Sub marble-ecs-container-${STAGE}
+          ContainerPort: 3004
