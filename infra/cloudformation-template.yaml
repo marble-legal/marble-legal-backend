@@ -105,7 +105,7 @@ Resources:
             - Name: AWS_SECRET_ACCESS_KEY
               Value: !Ref AWSSECRETACCESSKEY
             - Name: EMAIL_SENDER_ID
-              Value: support@marblels.com
+              Value: contact@marblels.com
             - Name: AWS_REGION
               Value: us-east-1
           LogConfiguration:
