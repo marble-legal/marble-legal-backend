@@ -7,8 +7,10 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { User } from "./modules/users/entities/user.entity";
 import { EmailService } from "./shared/providers/email.service";
 import { UserSubscription } from "./modules/users/entities/user-subscription.entity";
+import { ConversationsModule } from "./modules/conversations/conversations.module";
+import { Conversation } from "./modules/conversations/entities/conversation.entity";
 
-const dbEntities = [User, UserSubscription];
+const dbEntities = [User, UserSubscription, Conversation];
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ const dbEntities = [User, UserSubscription];
       synchronize: true,
     }),
     UsersModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
