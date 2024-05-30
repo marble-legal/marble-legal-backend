@@ -9,6 +9,9 @@ import {
   UseGuards,
   Query,
   Request,
+  UseInterceptors,
+  UploadedFile,
+  Res,
 } from "@nestjs/common";
 import { ContractsService } from "./contracts.service";
 import { CreateContractDto } from "./dto/create-contract.dto";
@@ -16,6 +19,8 @@ import { UpdateContractDto } from "./dto/update-contract.dto";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/shared/providers/jwt.auth.guard";
 import { GetContractsDto } from "./dto/get-contracts.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { CreateContractConversationDto } from "./dto/create-contract-conversation.dto";
 
 @ApiTags("Contracts Management")
 @Controller("contracts")
@@ -59,5 +64,12 @@ export class ContractsController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.contractsService.remove(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(":id/query")
+  provideQueryResponse(@Param("id") id: string, @Body() createContractConversationDto: CreateContractConversationDto, @Request() req) {
+    return this.contractsService.provideQueryResponse(id, createContractConversationDto, req.user.id);
   }
 }

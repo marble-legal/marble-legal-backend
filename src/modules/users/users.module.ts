@@ -8,9 +8,14 @@ import { JwtStrategy } from "../../shared/providers/jwt.strategy";
 import { UserDataRepository } from "./users.repository";
 import { UserSubscription } from "./entities/user-subscription.entity";
 import { StripeService } from "src/shared/providers/stripe.service";
+import { ContractsService } from "../contracts/contracts.service";
+import { ContractsModule } from "../contracts/contracts.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserSubscription])],
+  imports: [
+    TypeOrmModule.forFeature([User, UserSubscription]),
+    ContractsModule,
+  ],
   controllers: [UsersController],
   providers: [
     UsersService,

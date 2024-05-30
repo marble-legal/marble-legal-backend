@@ -9,8 +9,11 @@ import {
   Put,
   Query,
   Request,
+  Res,
   UnauthorizedException,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
@@ -24,11 +27,16 @@ import { UserType } from "./entities/user.entity";
 import { UpdateUserStatusDto } from "./dto/update-user-status.dto";
 import { GetReportsDto } from "./dto/get-reports.dto";
 import { GetStripeCheckoutUrlDto } from "./dto/get-stripe-checkout-url.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ContractsService } from "../contracts/contracts.service";
 
 @ApiTags("User Management")
 @Controller("users")
 export class UsersController {
-  constructor(private readonly userService: UsersService) {}
+  constructor(
+    private readonly userService: UsersService,
+    private readonly contractsService: ContractsService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -151,6 +159,17 @@ export class UsersController {
   @Get(":id/dashboard")
   fetchDashboard(@Param("id") id: string, @Request() req) {
     return this.userService.fetchDashboard(id, req.user.type);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(":id/contracts")
+  @UseInterceptors(FileInterceptor("file"))
+  async provideResponse(
+    @Param("id") id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.contractsService.uploadContract(file, id);
   }
 
   // @UseGuards(JwtAuthGuard)

@@ -40,6 +40,7 @@ import {
   UserSubscription,
   UserSubscriptionStatus,
 } from "./entities/user-subscription.entity";
+import { ContractsService } from "../contracts/contracts.service";
 
 const otpGenerator = require("otp-generator");
 

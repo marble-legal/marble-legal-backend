@@ -7,6 +7,8 @@ import { Repository } from "typeorm";
 import { OpenAIService } from "src/shared/providers/openai.service";
 import { GetContractsDto } from "./dto/get-contracts.dto";
 import { FileUploaderService } from "src/shared/providers/file-uploader.service";
+import { Conversation } from "../conversations/entities/conversation.entity";
+import { CreateContractConversationDto } from "./dto/create-contract-conversation.dto";
 const util = require("util");
 const pdf = require("html-pdf");
 const os = require("os");
@@ -16,6 +18,8 @@ export class ContractsService {
   constructor(
     @InjectRepository(Contract)
     private contractsRepository: Repository<Contract>,
+    @InjectRepository(Conversation)
+    private conversationsRepository: Repository<Conversation>,
     private readonly openAIService: OpenAIService,
     private readonly fileUploaderService: FileUploaderService,
   ) {}
@@ -43,7 +47,7 @@ export class ContractsService {
     const pdfPath = await this.createPdf(aiResponse.content);
     const url = await this.fileUploaderService.uploadContent(
       pdfPath.filename,
-      `app/users/${userId}/contracts`,
+      `app/users/${userId}/contracts/${contractObj.id}`,
       `${contractObj.id}.pdf`,
       "application/pdf",
     );
@@ -130,5 +134,88 @@ export class ContractsService {
         isActive: false,
       },
     );
+  }
+
+  async provideQueryResponse(id: string, createContractConversationDto: CreateContractConversationDto, userId: string) {
+    const previousConversations = await this.conversationsRepository.find({
+      where: {
+        contractId: id,
+        userId: userId,
+        isActive: true,
+      },
+      order: { createdAt: "DESC" },
+      take: 16,
+    });
+
+    const latestConversations = previousConversations
+      .reverse()
+      .map((conversation) => {
+        if (conversation.isUserMessage) {
+          return { role: "user", content: conversation.message };
+        }
+
+        return { role: "assistant", content: conversation.message };
+      });
+
+    console.log("latestConversations", latestConversations);
+
+    const aiResponse = await this.openAIService.suggestMessage(
+      createContractConversationDto.message,
+      latestConversations,
+      false,
+    );
+    // console.log(aiResponse);
+    // const aiResponseObj = JSON.parse(aiResponse);
+
+    console.log(aiResponse);
+
+    const message = aiResponse;
+
+    await Promise.all([
+      this.conversationsRepository.insert({
+        userId: userId,
+        message: createContractConversationDto.message,
+        isUserMessage: true,
+      }),
+      this.conversationsRepository.insert({
+        userId: userId,
+        message: message,
+        isUserMessage: false,
+      }),
+    ]);
+
+    return {
+      message: message,
+    };
+  }
+
+  async uploadContract(file: Express.Multer.File, userId: string) {
+    const filePath = `/tmp/${file.originalname}`;
+
+    const contractObj = await this.contractsRepository.save({
+      userId: userId,
+      title: file.originalname,
+      isGenerated: false,
+    });
+
+    const s3Response = await this.fileUploaderService.uploadContent(
+      filePath,
+      `app/users/${userId}/contracts/${contractObj.id}`,
+      `${contractObj.id}.pdf`,
+      file.mimetype,
+    );
+
+    await this.contractsRepository.update(
+      {
+        id: contractObj.id,
+      },
+      {
+        pdfUrl: s3Response.Location,
+      },
+    );
+
+    return {
+      message: "Contract uploaded successfully",
+    };
   }
 }
