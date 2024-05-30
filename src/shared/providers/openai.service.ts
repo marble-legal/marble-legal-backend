@@ -5,7 +5,12 @@ import { Injectable } from "@nestjs/common";
 export class OpenAIService {
   constructor() {}
 
-  async suggestMessage(prompt: string, previousMessages: any[], systemPrompt?: string) {
+  async suggestMessage(
+    prompt: string,
+    previousMessages: any[],
+    isJsonResponse: boolean,
+    systemPrompt?: string,
+  ) {
     try {
       const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
@@ -17,14 +22,20 @@ export class OpenAIService {
         messages.push({ role: "system", content: systemPrompt });
       }
 
-      messages.push(...previousMessages)
+      messages.push(...previousMessages);
 
-      const chatCompletion = await openai.chat.completions.create({
+      const params: any = {
         messages: [...messages, { role: "user", content: prompt }],
         model: "gpt-4-1106-preview",
         n: 1,
         temperature: 1,
-      });
+      };
+
+      if (isJsonResponse) {
+        params["response_format"] = { type: "json_object" };
+      }
+
+      const chatCompletion = await openai.chat.completions.create(params);
 
       const msg =
         chatCompletion.choices && chatCompletion.choices.length > 0

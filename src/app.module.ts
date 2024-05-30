@@ -9,8 +9,10 @@ import { EmailService } from "./shared/providers/email.service";
 import { UserSubscription } from "./modules/users/entities/user-subscription.entity";
 import { ConversationsModule } from "./modules/conversations/conversations.module";
 import { Conversation } from "./modules/conversations/entities/conversation.entity";
+import { ContractsModule } from "./modules/contracts/contracts.module";
+import { Contract } from "./modules/contracts/entities/contract.entity";
 
-const dbEntities = [User, UserSubscription, Conversation];
+const dbEntities = [User, UserSubscription, Conversation, Contract];
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ const dbEntities = [User, UserSubscription, Conversation];
     }),
     UsersModule,
     ConversationsModule,
+    ContractsModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
