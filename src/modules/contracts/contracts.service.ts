@@ -83,6 +83,8 @@ export class ContractsService {
   async findAll(getContractsDto: GetContractsDto) {
     return await this.contractsRepository.findBy({
       userId: getContractsDto.userId,
+      isActive: true,
+      isGenerated: getContractsDto.isGenerated,
     });
   }
 
