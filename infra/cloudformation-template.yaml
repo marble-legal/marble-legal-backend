@@ -30,6 +30,9 @@ Parameters:
   LBCERTIFICATE:
     Type: String
     Description: ARN For Certificate to use with Load Balancer
+  OPENAIAPIKEY:
+    Type: String
+    Description: AWS Secret key
 
 Resources:
   ECRRepository:
@@ -108,6 +111,8 @@ Resources:
               Value: contact@marblels.com
             - Name: AWS_REGION
               Value: us-east-1
+            - Name: OPENAI_API_KEY
+              Value: !Ref OPENAIAPIKEY
           LogConfiguration:
             LogDriver: awslogs
             Options:
