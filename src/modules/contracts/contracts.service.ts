@@ -181,11 +181,13 @@ export class ContractsService {
         userId: userId,
         message: createContractConversationDto.message,
         isUserMessage: true,
+        contractId: id,
       }),
       this.conversationsRepository.insert({
         userId: userId,
         message: message,
         isUserMessage: false,
+        contractId: id,
       }),
     ]);
 
