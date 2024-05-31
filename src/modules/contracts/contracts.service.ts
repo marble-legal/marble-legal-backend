@@ -9,6 +9,7 @@ import { GetContractsDto } from "./dto/get-contracts.dto";
 import { FileUploaderService } from "src/shared/providers/file-uploader.service";
 import { Conversation } from "../conversations/entities/conversation.entity";
 import { CreateContractConversationDto } from "./dto/create-contract-conversation.dto";
+import * as fs from "fs";
 const util = require("util");
 const pdf = require("html-pdf");
 const os = require("os");
@@ -190,7 +191,9 @@ export class ContractsService {
   }
 
   async uploadContract(file: Express.Multer.File, userId: string) {
+    const buff = file.buffer;
     const filePath = `/tmp/${file.originalname}`;
+    fs.writeFileSync(filePath, buff);
 
     const contractObj = await this.contractsRepository.save({
       userId: userId,

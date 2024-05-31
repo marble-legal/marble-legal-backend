@@ -8,7 +8,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   const config = new DocumentBuilder()
-    .setTitle("marble seller")
+    .setTitle("marble legal")
     .setDescription("The backend APIs")
     .setVersion("1.0")
     .addTag("marble")
