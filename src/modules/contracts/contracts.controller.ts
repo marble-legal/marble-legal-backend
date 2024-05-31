@@ -69,7 +69,15 @@ export class ContractsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post(":id/query")
-  provideQueryResponse(@Param("id") id: string, @Body() createContractConversationDto: CreateContractConversationDto, @Request() req) {
-    return this.contractsService.provideQueryResponse(id, createContractConversationDto, req.user.id);
+  provideQueryResponse(
+    @Param("id") id: string,
+    @Body() createContractConversationDto: CreateContractConversationDto,
+    @Request() req,
+  ) {
+    return this.contractsService.provideQueryResponse(
+      id,
+      createContractConversationDto,
+      req.user.id,
+    );
   }
 }

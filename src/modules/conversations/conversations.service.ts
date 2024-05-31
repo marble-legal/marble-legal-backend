@@ -65,11 +65,17 @@ export class ConversationsService {
     };
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, contractId?: string) {
+    const params = {
+      userId: userId,
+    };
+
+    if (contractId) {
+      params["contractId"] = contractId;
+    }
+
     return await this.conversationsRepository.find({
-      where: {
-        userId: userId,
-      },
+      where: params,
       order: {
         createdAt: "ASC",
       },

@@ -33,7 +33,10 @@ export class ConversationsController {
   @ApiBearerAuth()
   @Get()
   findAll(@Query() getConversationsDto: GetConversationsDto) {
-    return this.conversationsService.findAll(getConversationsDto.userId);
+    return this.conversationsService.findAll(
+      getConversationsDto.userId,
+      getConversationsDto.contractId,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

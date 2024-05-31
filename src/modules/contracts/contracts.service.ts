@@ -137,7 +137,11 @@ export class ContractsService {
     );
   }
 
-  async provideQueryResponse(id: string, createContractConversationDto: CreateContractConversationDto, userId: string) {
+  async provideQueryResponse(
+    id: string,
+    createContractConversationDto: CreateContractConversationDto,
+    userId: string,
+  ) {
     const previousConversations = await this.conversationsRepository.find({
       where: {
         contractId: id,

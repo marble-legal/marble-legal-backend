@@ -22,6 +22,6 @@ export class Conversation extends Base {
   @Column({ default: LikeStatus.None })
   likeStatus: LikeStatus;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   contractId?: string;
 }
