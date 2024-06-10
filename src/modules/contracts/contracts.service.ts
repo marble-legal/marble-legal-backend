@@ -75,6 +75,11 @@ export class ContractsService {
       orientation: "portrait",
       directory: os.tmpdir(),
       filename: "tnc.pdf",
+      childProcessOptions: {
+        env: {
+          OPENSSL_CONF: '/dev/null',
+        },
+      }
     };
 
     try {
