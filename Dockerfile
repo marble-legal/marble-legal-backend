@@ -3,7 +3,7 @@ FROM --platform=linux/x86_64 public.ecr.aws/docker/library/node:18-alpine AS app
 ENV PHANTOMJS_VERSION=2.1.1
 ENV PHANTOMJS_PATH=/usr/local/bin/phantomjs
 RUN apk update && apk add --no-cache tar gzip bzip2 fontconfig curl curl-dev && \
-    cd /tmp && curl -Ls https://github.com/dustinblackman/phantomized/releases/download/${PHANTOMJS_VERSION}/dockerized-phantomjs.tar.gz | tar xz && \
+    cd /tmp && curl -Ls https://github.com/topseom/phantomized/releases/download/${PHANTOMJS_VERSION}/dockerized-phantomjs.tar.gz | tar xz && \
     cp -R lib lib64 / && \
     cp -R usr/lib/x86_64-linux-gnu /usr/lib && \
     cp -R usr/share /usr/share && \
