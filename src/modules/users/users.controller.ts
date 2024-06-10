@@ -29,6 +29,7 @@ import { GetReportsDto } from "./dto/get-reports.dto";
 import { GetStripeCheckoutUrlDto } from "./dto/get-stripe-checkout-url.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ContractsService } from "../contracts/contracts.service";
+import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 
 @ApiTags("User Management")
 @Controller("users")
@@ -94,6 +95,23 @@ export class UsersController {
   @Post(":id/email/verify")
   verifyEmail(@Param("id") id: string, @Body() verifyEmailDto: VerifyEmailDto) {
     return this.userService.verifyEmail(id, verifyEmailDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(":id/email/update/initiate")
+  initiateEmailUpdation(
+    @Param("id") id: string,
+    @Body() updateEmailDto: UpdateUserEmailDto,
+  ) {
+    return this.userService.initiateEmailUpdation(id, updateEmailDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post(":id/email/update")
+  updateEmail(@Param("id") id: string, @Body() verifyEmailDto: VerifyEmailDto) {
+    return this.userService.updateEmail(id, verifyEmailDto);
   }
 
   @UseGuards(JwtAuthGuard)

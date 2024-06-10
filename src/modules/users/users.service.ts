@@ -41,6 +41,7 @@ import {
   UserSubscriptionStatus,
 } from "./entities/user-subscription.entity";
 import { ContractsService } from "../contracts/contracts.service";
+import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 
 const otpGenerator = require("otp-generator");
 
@@ -105,6 +106,7 @@ export class UsersService {
         email: user.email,
         profileImg: user.profileImg,
         type: user.userType,
+        isEmailNotificationOn: user.isEmailNotificationOn,
       };
     } catch (err: any) {
       throw err;
@@ -134,6 +136,10 @@ export class UsersService {
     }
     if (requestParams.profileImg !== undefined) {
       params["profileImg"] = requestParams.profileImg;
+    }
+
+    if (requestParams.isEmailNotificationOn !== undefined) {
+      params["isEmailNotificationOn"] = requestParams.isEmailNotificationOn;
     }
 
     await this.usersRepository.update(
@@ -325,6 +331,66 @@ export class UsersService {
           id: id,
         },
         {
+          isEmailVerified: true,
+        },
+      );
+    } catch (err: any) {
+      throw err;
+    }
+  }
+
+  async initiateEmailUpdation(id: string, updateEmailDto: UpdateUserEmailDto) {
+    try {
+      const user = await this.findOne(id);
+      if (user === undefined || user === null) {
+        throw new NotFoundException(`No user found with id: ${id}`);
+      }
+      await this.validateEmail(updateEmailDto.email);
+
+      const otp = otpGenerator.generate(4, {
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false,
+      });
+      await Promise.all([
+        this.emailService.sendEmail({
+          toEmailIds: [user.email],
+          subject: "Verify email",
+          body: `OTP to verify email is: ${otp}`,
+        }),
+        this.usersRepository.update(
+          {
+            id: id,
+          },
+          {
+            otp: otp,
+            otpDate: new Date(),
+            updateEmail: updateEmailDto.email,
+          },
+        ),
+      ]);
+    } catch (err: any) {
+      throw err;
+    }
+  }
+
+  async updateEmail(id: string, verifyEmailDto: VerifyEmailDto) {
+    try {
+      const user = await this.usersRepository.findOneBy({
+        id: id,
+        otp: verifyEmailDto.otp,
+      });
+      if (user === undefined || user === null) {
+        throw new BadRequestException(
+          "Wrong OTP entered, Please enter the correct OTP.",
+        );
+      }
+      await this.usersRepository.update(
+        {
+          id: id,
+        },
+        {
+          email: user.updateEmail,
           isEmailVerified: true,
         },
       );

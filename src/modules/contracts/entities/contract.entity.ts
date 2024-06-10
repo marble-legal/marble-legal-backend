@@ -1,6 +1,8 @@
 import { Base } from "src/shared/entities/base.entity";
 import { Column, Entity, Index } from "typeorm";
 
+export enum ContractType {}
+
 @Entity()
 export class Contract extends Base {
   @Index()

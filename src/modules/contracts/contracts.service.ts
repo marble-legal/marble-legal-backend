@@ -77,9 +77,9 @@ export class ContractsService {
       filename: "tnc.pdf",
       childProcessOptions: {
         env: {
-          OPENSSL_CONF: '/dev/null',
+          OPENSSL_CONF: "/dev/null",
         },
-      }
+      },
     };
 
     try {

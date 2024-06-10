@@ -55,6 +55,9 @@ export class User extends Base {
   tier?: Tier;
 
   @Column({ nullable: true })
+  updateEmail?: string;
+
+  @Column({ nullable: true })
   otp?: string;
 
   @Column({ nullable: true })
@@ -64,4 +67,7 @@ export class User extends Base {
 
   @Column({ default: LoginState.None })
   loginState?: LoginState;
+
+  @Column({ default: false })
+  isEmailNotificationOn?: boolean;
 }
