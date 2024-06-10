@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 public.ecr.aws/docker/library/node:18-alpine AS app
+FROM public.ecr.aws/docker/library/node:18-alpine AS app
 
 ENV PHANTOMJS_VERSION=2.1.1
 ENV PHANTOMJS_PATH=/usr/local/bin/phantomjs
