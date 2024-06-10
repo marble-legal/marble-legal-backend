@@ -1,5 +1,6 @@
 FROM --platform=linux/amd64 public.ecr.aws/docker/library/node:18-alpine AS app
 
+ENV PHANTOMJS_VERSION=2.1.1
 ENV PHANTOMJS_PATH=/usr/local/bin/phantomjs
 RUN apk update && apk add --no-cache fontconfig curl curl-dev && \
     cd /tmp && curl -Ls https://github.com/dustinblackman/phantomized/releases/download/${PHANTOMJS_VERSION}/dockerized-phantomjs.tar.gz | tar xz && \
