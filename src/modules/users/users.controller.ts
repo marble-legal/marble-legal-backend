@@ -30,6 +30,7 @@ import { GetStripeCheckoutUrlDto } from "./dto/get-stripe-checkout-url.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ContractsService } from "../contracts/contracts.service";
 import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
+import { DeleteUserDto } from "./dto/delete-user.dto";
 
 @ApiTags("User Management")
 @Controller("users")
@@ -117,13 +118,13 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Delete(":id")
-  remove(@Param("id") id: string, @Request() req) {
+  remove(@Param("id") id: string, @Request() req, @Body() deleteUserDto: DeleteUserDto) {
     if (req.user.type !== UserType.Admin && req.user.id !== id) {
       throw new UnauthorizedException(
         "You are not authorized to delete other user account",
       );
     }
-    return this.userService.remove(id);
+    return this.userService.remove(id, deleteUserDto, req.user.type);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -42,6 +42,7 @@ import {
 } from "./entities/user-subscription.entity";
 import { ContractsService } from "../contracts/contracts.service";
 import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
+import { DeleteUserDto } from "./dto/delete-user.dto";
 
 const otpGenerator = require("otp-generator");
 
@@ -396,7 +397,22 @@ export class UsersService {
     }
   }
 
-  async remove(userId: string) {
+  async remove(userId: string, deleteUserDto: DeleteUserDto, userType: UserType) {
+    if (userType !== UserType.Admin) {
+      if (deleteUserDto.password === undefined) {
+        throw new BadRequestException("Password must be provided for confirmation");
+      }
+
+      const user = await this.usersRepository.findOneBy({
+        id: userId,
+      });
+      const userObj = await this.checkPassword(user, deleteUserDto.password);
+
+      if (!userObj) {
+        throw new BadRequestException(`Password is not matching`);
+      }
+    }
+    
     await this.usersRepository.delete({
       id: userId,
     });
