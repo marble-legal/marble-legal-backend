@@ -127,7 +127,7 @@ export class OpenAIService {
   async provideResponseFromDocument(documentId: string, query: string) {
     const vectorStore = await Chroma.fromExistingCollection(
       new OpenAIEmbeddings(),
-      { collectionName: documentId, url: "https://chroma-db.api.marblels.com", },
+      { collectionName: documentId, url: "https://chroma-db.api.marblels.com" },
     );
 
     // const retriever = vectorStore.asRetriever({ k: 6, searchType: "similarity" });

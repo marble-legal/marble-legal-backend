@@ -169,7 +169,10 @@ export class ContractsService {
 
     console.log("latestConversations", latestConversations);
 
-    const aiResponse = await this.openAIService.provideResponseFromDocument(id, createContractConversationDto.message);
+    const aiResponse = await this.openAIService.provideResponseFromDocument(
+      id,
+      createContractConversationDto.message,
+    );
 
     console.log(aiResponse);
 
@@ -213,8 +216,8 @@ export class ContractsService {
         `${contractObj.id}.pdf`,
         file.mimetype,
       ),
-      this.openAIService.storeDocumentInRagLayer(filePath, contractObj.id)
-    ])
+      this.openAIService.storeDocumentInRagLayer(filePath, contractObj.id),
+    ]);
 
     await this.contractsRepository.update(
       {

@@ -31,6 +31,8 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { ContractsService } from "../contracts/contracts.service";
 import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
+import { GetStripeCustomerPortalUrlDto } from "./dto/get-stripe-customer-portal-url.dto";
+import { UpdateSubscriptionDto } from "./dto/update-subscription.dto";
 
 @ApiTags("User Management")
 @Controller("users")
@@ -118,7 +120,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Delete(":id")
-  remove(@Param("id") id: string, @Request() req, @Body() deleteUserDto: DeleteUserDto) {
+  remove(
+    @Param("id") id: string,
+    @Request() req,
+    @Body() deleteUserDto: DeleteUserDto,
+  ) {
     if (req.user.type !== UserType.Admin && req.user.id !== id) {
       throw new UnauthorizedException(
         "You are not authorized to delete other user account",
@@ -191,36 +197,64 @@ export class UsersController {
     return this.contractsService.uploadContract(file, id);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth()
-  // @Get(":id/stripe-connect-url")
-  // fetchStripeConnectionUrl(
-  //   @Param("id") id: string,
-  //   @Request() req,
-  //   @Query() getStripeCheckoutUrlDto: GetStripeCheckoutUrlDto,
-  // ) {
-  //   return this.userService.fetchStripeCheckoutUrl(
-  //     id,
-  //     req.user,
-  //     getStripeCheckoutUrlDto,
-  //   );
-  // }
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get(":id/stripe-connect-url")
+  fetchStripeConnectionUrl(
+    @Param("id") id: string,
+    @Request() req,
+    @Query() getStripeCheckoutUrlDto: GetStripeCheckoutUrlDto,
+  ) {
+    return this.userService.fetchStripeCheckoutUrl(
+      id,
+      req.user,
+      getStripeCheckoutUrlDto,
+    );
+  }
 
-  // @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth()
-  // @Get(":id/subscriptions")
-  // fetchSubscriptions(@Param("id") id: string, @Request() req) {
-  //   return this.userService.fetchSubscriptions(id);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get(":id/stripe-customer-portal-url")
+  fetchStripeCustomerPortalUrl(
+    @Param("id") id: string,
+    @Request() req,
+    @Query() getStripeCustomerPortalUrlDto: GetStripeCustomerPortalUrlDto,
+  ) {
+    return this.userService.fetchStripeCustomerPortalUrl(
+      id,
+      getStripeCustomerPortalUrlDto,
+    );
+  }
 
-  // @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth()
-  // @Delete(":id/subscriptions/:subscriptionId")
-  // cancelSubscription(
-  //   @Param("id") id: string,
-  //   @Param("subscriptionId") subscriptionId: string,
-  //   @Request() req,
-  // ) {
-  //   return this.userService.cancelSubscription(subscriptionId, id);
-  // }
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get(":id/subscriptions")
+  fetchSubscriptions(@Param("id") id: string) {
+    return this.userService.fetchSubscriptions(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Delete(":id/subscriptions/:subscriptionId")
+  cancelSubscription(
+    @Param("id") id: string,
+    @Param("subscriptionId") subscriptionId: string,
+  ) {
+    return this.userService.cancelSubscription(subscriptionId, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Patch(":id/subscriptions/:subscriptionId")
+  updateSubscription(
+    @Param("id") id: string,
+    @Param("subscriptionId") subscriptionId: string,
+    @Body() updateSubscriptionDto: UpdateSubscriptionDto,
+  ) {
+    return this.userService.updateSubscription(
+      subscriptionId,
+      id,
+      updateSubscriptionDto,
+    );
+  }
 }

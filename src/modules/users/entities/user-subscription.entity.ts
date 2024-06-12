@@ -17,6 +17,9 @@ export class UserSubscription extends Base {
   subscriptionId?: string;
 
   @Column({ nullable: true })
+  subscriptionItemId?: string;
+
+  @Column({ nullable: true })
   checkoutSessionId?: string;
 
   @Column()
@@ -34,7 +37,7 @@ export class UserSubscription extends Base {
   @Column()
   planType: PlanType;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: "decimal", precision: 5, scale: 2 })
   amount?: number;
 
   @Column({ nullable: true })

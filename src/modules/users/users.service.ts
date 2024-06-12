@@ -13,7 +13,7 @@ import {
 } from "./entities/user.entity";
 import * as dotenv from "dotenv";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { MoreThan, Repository } from "typeorm";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { GetUsersDto } from "./dto/get-users.dto";
 import { UpdateUserPasswordDto } from "./dto/update-user-password.dto";
@@ -43,6 +43,8 @@ import {
 import { ContractsService } from "../contracts/contracts.service";
 import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
+import { GetStripeCustomerPortalUrlDto } from "./dto/get-stripe-customer-portal-url.dto";
+import { UpdateSubscriptionDto } from "./dto/update-subscription.dto";
 
 const otpGenerator = require("otp-generator");
 
@@ -397,10 +399,16 @@ export class UsersService {
     }
   }
 
-  async remove(userId: string, deleteUserDto: DeleteUserDto, userType: UserType) {
+  async remove(
+    userId: string,
+    deleteUserDto: DeleteUserDto,
+    userType: UserType,
+  ) {
     if (userType !== UserType.Admin) {
       if (deleteUserDto.password === undefined) {
-        throw new BadRequestException("Password must be provided for confirmation");
+        throw new BadRequestException(
+          "Password must be provided for confirmation",
+        );
       }
 
       const user = await this.usersRepository.findOneBy({
@@ -412,7 +420,7 @@ export class UsersService {
         throw new BadRequestException(`Password is not matching`);
       }
     }
-    
+
     await this.usersRepository.delete({
       id: userId,
     });
@@ -689,33 +697,100 @@ export class UsersService {
     };
   }
 
+  async fetchStripeCustomerPortalUrl(
+    id: string,
+    getStripeCustomerPortalUrlDto: GetStripeCustomerPortalUrlDto,
+  ) {
+    const user = await this.usersRepository.findOneBy({
+      id: id,
+    });
+    const session = await this.stripeService.fetchCustomerPortalUrl(
+      user.stripeCustomerId,
+      getStripeCustomerPortalUrlDto.redirectUrl,
+    );
+
+    return {
+      url: session.url,
+    };
+  }
+
   async fetchSubscriptions(id: string) {
     const currentDate = new Date();
-    return await this.userSubscriptionsRepository.findBy({
-      userId: id,
-      // $or: [
-      //   { status: UserSubscriptionStatus.Paid },
-      //   {
-      //     status: UserSubscriptionStatus.Cancelled,
-      //     cancelledAt: {
-      //       $gte: currentDate,
-      //     },
-      //   },
-      // ],
+    return await this.userSubscriptionsRepository.find({
+      where: [
+        {
+          userId: id,
+          status: UserSubscriptionStatus.Paid,
+        },
+        {
+          userId: id,
+          status: UserSubscriptionStatus.Cancelled,
+          cancelledAt: MoreThan(currentDate),
+        },
+      ],
+      order: {
+        createdAt: "DESC",
+      },
+      take: 1,
     });
   }
 
+  async updateSubscription(
+    subscriptionId: string,
+    userId: string,
+    updateSubscriptionDto: UpdateSubscriptionDto,
+  ) {
+    const subscription = await this.userSubscriptionsRepository.findOneBy({
+      subscriptionId: subscriptionId,
+    });
+
+    if (!subscription) {
+      throw new NotFoundException(
+        `Subscription with id: ${subscriptionId} not found`,
+      );
+    }
+
+    let subscriptionItemId = subscription.subscriptionItemId;
+
+    if (subscriptionItemId === undefined || subscriptionItemId === null) {
+      const subscriptionData =
+        await this.stripeService.fetchSubscription(subscriptionId);
+      subscriptionItemId = subscriptionData?.items?.data[0]?.id;
+      await this.userSubscriptionsRepository.update(
+        {
+          subscriptionId: subscriptionId,
+        },
+        {
+          subscriptionItemId: subscriptionItemId,
+        },
+      );
+    }
+
+    await Promise.all([
+      this.stripeService.updateSubscription(
+        subscriptionId,
+        subscriptionItemId,
+        updateSubscriptionDto.tier,
+        updateSubscriptionDto.planType,
+      ),
+      this.userSubscriptionsRepository.update(
+        {
+          subscriptionId: subscriptionId,
+          userId: userId,
+        },
+        {
+          tier: updateSubscriptionDto.tier,
+        },
+      ),
+    ]);
+
+    return {
+      message: "Subscription updated successfully",
+    };
+  }
+
   async cancelSubscription(subscriptionId: string, userId: string) {
-    const result = await this.stripeService.cancelSubscription(subscriptionId);
-    await this.userSubscriptionsRepository.update(
-      {
-        subscriptionId: subscriptionId,
-        userId: userId,
-      },
-      {
-        status: UserSubscriptionStatus.Cancelled,
-      },
-    );
+    await this.stripeService.cancelSubscription(subscriptionId);
   }
 
   async handleStripeWebhook(event: any) {
@@ -726,36 +801,35 @@ export class UsersService {
           data.object.payment_status === "paid"
             ? UserSubscriptionStatus.Paid
             : UserSubscriptionStatus.Cancelled;
-        const session = await this.userSubscriptionsRepository.update(
-          {
-            checkoutSessionId: data.object.id,
-            userId: data.object.client_reference_id,
-          },
-          {
-            subscriptionId: data.object.subscription,
-            status: subscriptionStatus,
-            amount: data.object.amount_subtotal / 100,
-            currency: data.object.currency,
-          },
-        );
-
-        if (data.object.payment_status === "paid") {
-          await this.usersRepository.update(
+        await Promise.all([
+          this.userSubscriptionsRepository.update(
+            {
+              checkoutSessionId: data.object.id,
+              userId: data.object.client_reference_id,
+            },
+            {
+              subscriptionId: data.object.subscription,
+              status: subscriptionStatus,
+              amount: data.object.amount_subtotal / 100,
+              currency: data.object.currency,
+              customerId: data.object.customer,
+            },
+          ),
+          this.usersRepository.update(
             {
               id: data.object.client_reference_id,
             },
             {
-              isActive: subscriptionStatus === UserSubscriptionStatus.Paid,
+              stripeCustomerId: data.object.customer,
             },
-          );
-        }
+          ),
+        ]);
 
         break;
       }
 
       case "customer.subscription.updated": {
         const data = event.data;
-        const planType = PlanType.MONTHLY;
 
         const subscriptionStatus =
           data.object.cancel_at === null
@@ -766,33 +840,55 @@ export class UsersService {
           cancelledAt = new Date(0);
           cancelledAt.setUTCSeconds(data.object.cancel_at);
         }
-        try {
-          await this.userSubscriptionsRepository.update(
-            {
-              subscriptionId: data.object.id,
-            },
-            {
-              status: subscriptionStatus,
-              tier: Tier.STANDARD,
-              planType: planType,
-              amount: data.object.plan.amount / 100,
-              currency: data.object.plan.currency,
-              cancelledAt: cancelledAt,
-            },
-          );
 
-          if (data.object.payment_status === "paid") {
-            await this.usersRepository.update(
+        const MonthlyPriceTierMap = {
+          [process.env.STRIPE_INDIVIDUAL_MONTHLY_PRICE_ID]: Tier.INDIVIDUAL,
+          [process.env.STRIPE_SMALL_BUSINESS_MONTHLY_PRICE_ID]:
+            Tier.SMALL_BUSINESS,
+          [process.env.STRIPE_SOLO_PRACTIONER_MONTHLY_PRICE_ID]:
+            Tier.SOLO_PRACTITIONER,
+        };
+
+        const YearlyPriceTierMap = {
+          [process.env.STRIPE_INDIVIDUAL_YEARLY_PRICE_ID]: Tier.INDIVIDUAL,
+          [process.env.STRIPE_SMALL_BUSINESS_YEARLY_PRICE_ID]:
+            Tier.SMALL_BUSINESS,
+          [process.env.STRIPE_SOLO_PRACTIONER_YEARLY_PRICE_ID]:
+            Tier.SOLO_PRACTITIONER,
+        };
+
+        const priceId = data.object.plan.id;
+        let tier = MonthlyPriceTierMap[priceId];
+        let planType = PlanType.MONTHLY;
+        if (tier === undefined) {
+          tier = YearlyPriceTierMap[priceId];
+          planType = PlanType.YEARLY;
+        }
+        try {
+          await Promise.all([
+            this.userSubscriptionsRepository.update(
+              {
+                subscriptionId: data.object.id,
+              },
+              {
+                status: subscriptionStatus,
+                amount: data.object.plan.amount / 100,
+                currency: data.object.plan.currency,
+                cancelledAt: cancelledAt,
+                subscriptionItemId: data.object.items.data[0].id,
+                planType: planType,
+                tier: tier,
+              },
+            ),
+            this.usersRepository.update(
               {
                 id: data.object.client_reference_id,
               },
               {
-                tier: Tier.STANDARD,
-                planType: planType,
-                isActive: subscriptionStatus === UserSubscriptionStatus.Paid,
+                tier: tier,
               },
-            );
-          }
+            ),
+          ]);
         } catch (err) {
           console.error("handle stripe webhook", err);
         }

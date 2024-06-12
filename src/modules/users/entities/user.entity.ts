@@ -13,13 +13,13 @@ export enum LoginState {
 
 export enum PlanType {
   MONTHLY = "M",
+  YEARLY = "Y",
 }
 
 export enum Tier {
-  STANDARD = "ST",
-  PRO = "PR",
-  MAX = "MX",
-  ULTRA = "UL",
+  INDIVIDUAL = "IN",
+  SMALL_BUSINESS = "SB",
+  SOLO_PRACTITIONER = "SP",
 }
 
 @Entity()
@@ -67,6 +67,9 @@ export class User extends Base {
 
   @Column({ default: LoginState.None })
   loginState?: LoginState;
+
+  @Column({ nullable: true })
+  stripeCustomerId?: string;
 
   @Column({ default: false })
   isEmailNotificationOn?: boolean;

@@ -33,6 +33,30 @@ Parameters:
   OPENAIAPIKEY:
     Type: String
     Description: AWS Secret key
+  RAG_API_KEY:
+    Type: String
+    Description: RAG API Key
+  STRIPESECRETKEY:
+    Type: String
+    Description: The secret key for stripe
+  STRIPEINDIVIDUALMONTHLYPRICEID:
+    Type: String
+    Description: Monthly Price ID for Individual Plan
+  STRIPESMALLBUSINESSMONTHLYPRICEID:
+    Type: String
+    Description: Monthly Price ID for Small Business Plan
+  STRIPESOLOPRACTIONERMONTHLYPRICEID:
+    Type: String
+    Description: Monthly Price ID for Solo Practioner Plan
+  STRIPEINDIVIDUALYEARLYPRICEID:
+    Type: String
+    Description: Yearly Price ID for Individual Plan
+  STRIPESMALLBUSINESSYEARLYPRICEID:  
+    Type: String
+    Description: Yearly Price ID for Small Business Plan
+  STRIPESOLOPRACTIONERYEARLYPRICEID:
+    Type: String
+    Description: Yearly Price ID for Solo Practioner Plan  
 
 Resources:
   ECRRepository:
@@ -113,6 +137,22 @@ Resources:
               Value: us-east-1
             - Name: OPENAI_API_KEY
               Value: !Ref OPENAIAPIKEY
+            - Name: RAG_API_KEY
+              Value: !Ref RAGAPIKEY
+            - Name: STRIPE_SECRET_KEY
+              Value: !Ref STRIPESECRETKEY
+            - Name: STRIPE_INDIVIDUAL_MONTHLY_PRICE_ID
+              Value: !Ref STRIPEINDIVIDUALMONTHLYPRICEID
+            - Name: STRIPE_SMALL_BUSINESS_MONTHLY_PRICE_ID
+              Value: !Ref STRIPESMALLBUSINESSMONTHLYPRICEID
+            - Name: STRIPE_SOLO_PRACTIONER_MONTHLY_PRICE_ID
+              Value: !Ref STRIPESOLOPRACTIONERMONTHLYPRICEID
+            - Name: STRIPE_INDIVIDUAL_YEARLY_PRICE_ID
+              Value: !Ref STRIPEINDIVIDUALYEARLYPRICEID
+            - Name: STRIPE_SMALL_BUSINESS_YEARLY_PRICE_ID
+              Value: !Ref STRIPESMALLBUSINESSYEARLYPRICEID
+            - Name: STRIPE_SOLO_PRACTIONER_YEARLY_PRICE_ID
+              Value: !Ref STRIPESOLOPRACTIONERYEARLYPRICEID
           LogConfiguration:
             LogDriver: awslogs
             Options:

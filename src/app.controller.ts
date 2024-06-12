@@ -20,8 +20,8 @@ export class AppController {
     };
   }
 
-  // @Post("/stripe-webhook")
-  // handleStripeWebhook(@Request() req) {
-  //   this.userService.handleStripeWebhook(req.body);
-  // }
+  @Post("/stripe-webhook")
+  handleStripeWebhook(@Request() req) {
+    this.userService.handleStripeWebhook(req.body);
+  }
 }
