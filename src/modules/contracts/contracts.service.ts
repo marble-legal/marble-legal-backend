@@ -169,13 +169,7 @@ export class ContractsService {
 
     console.log("latestConversations", latestConversations);
 
-    const aiResponse = await this.openAIService.suggestMessage(
-      createContractConversationDto.message,
-      latestConversations,
-      false,
-    );
-    // console.log(aiResponse);
-    // const aiResponseObj = JSON.parse(aiResponse);
+    const aiResponse = await this.openAIService.provideResponseFromDocument(id, createContractConversationDto.message);
 
     console.log(aiResponse);
 
@@ -212,12 +206,15 @@ export class ContractsService {
       isGenerated: false,
     });
 
-    const s3Response = await this.fileUploaderService.uploadContent(
-      filePath,
-      `app/users/${userId}/contracts/${contractObj.id}`,
-      `${contractObj.id}.pdf`,
-      file.mimetype,
-    );
+    const [s3Response] = await Promise.all([
+      this.fileUploaderService.uploadContent(
+        filePath,
+        `app/users/${userId}/contracts/${contractObj.id}`,
+        `${contractObj.id}.pdf`,
+        file.mimetype,
+      ),
+      this.openAIService.storeDocumentInRagLayer(filePath, contractObj.id)
+    ])
 
     await this.contractsRepository.update(
       {

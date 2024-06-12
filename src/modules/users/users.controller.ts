@@ -179,8 +179,8 @@ export class UsersController {
     return this.userService.fetchDashboard(id, req.user.type);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth()
   @Post(":id/contracts")
   @UseInterceptors(FileInterceptor("file"))
   async provideResponse(

@@ -52,7 +52,7 @@ AWS.config.credentials = {
   accessKeyId: process.env.AWS_ACCESS_KEY,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 };
-AWS.config.update({ region: "eu-north-1" });
+AWS.config.update({ region: process.env.AWS_REGION });
 
 const s3 = new AWS.S3();
 
@@ -257,9 +257,6 @@ export class UsersService {
     try {
       const path = {
         [GetSignedUrlUploadType.USER_PROFILE]: "images",
-        [GetSignedUrlUploadType.INSURANCE]: "insurance",
-        [GetSignedUrlUploadType.MESSAGES]: "messages",
-        [GetSignedUrlUploadType.DOCUMENTS]: "documents",
       };
 
       const params: any = {

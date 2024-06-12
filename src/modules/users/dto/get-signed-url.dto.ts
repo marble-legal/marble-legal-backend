@@ -3,9 +3,6 @@ import { IsEnum, IsString } from "class-validator";
 
 export enum GetSignedUrlUploadType {
   USER_PROFILE = "USER_PROFILE",
-  INSURANCE = "INSURANCE",
-  MESSAGES = "MESSAGES",
-  DOCUMENTS = "DOCUMENTS",
 }
 
 export class GetSignedUrlDto {
