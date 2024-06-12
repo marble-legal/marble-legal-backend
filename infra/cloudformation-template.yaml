@@ -33,7 +33,7 @@ Parameters:
   OPENAIAPIKEY:
     Type: String
     Description: AWS Secret key
-  RAG_API_KEY:
+  RAGAPIKEY:
     Type: String
     Description: RAG API Key
   STRIPESECRETKEY:
