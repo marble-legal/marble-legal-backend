@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
 import { Conversation } from "./entities/conversation.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { UpdateConversationDto } from "./dto/update-conversation.dto";
 import { OpenAIService } from "src/shared/providers/openai.service";
 import axios from "axios";
@@ -85,6 +85,8 @@ export class ConversationsService {
 
     if (contractId) {
       params["contractId"] = contractId;
+    } else {
+      params["contractId"] = IsNull();
     }
 
     return await this.conversationsRepository.find({
