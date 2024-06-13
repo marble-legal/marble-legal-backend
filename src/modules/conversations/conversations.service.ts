@@ -75,6 +75,7 @@ export class ConversationsService {
 
     return {
       message: message,
+      sourceDocuments: response.data?.source_documents,
     };
   }
 
