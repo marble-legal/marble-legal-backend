@@ -31,7 +31,7 @@ export class ContractsService {
       prompt,
       [],
       true,
-      "Generate a legal contract based on the details provided. Also generate title and summary. The agreement must be properly styled and formatted, and should be in a professional tone. The content of agreement must be in html",
+      "Generate a legal contract based on the details provided. Also generate title and summary. The agreement must be properly styled and formatted, and should be in a professional tone. The content of agreement must be in rich text format",
     );
     const aiResponse = JSON.parse(response);
 
@@ -123,6 +123,7 @@ export class ContractsService {
       },
       {
         pdfUrl: url.Location,
+        generatedContent: updateContractDto.content,
       },
     );
 
