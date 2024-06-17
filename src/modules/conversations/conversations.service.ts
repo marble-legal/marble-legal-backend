@@ -60,18 +60,17 @@ export class ConversationsService {
 
     const message = response.data.answer;
 
-    await Promise.all([
-      this.conversationsRepository.insert({
-        userId: userId,
-        message: createConversationDto.message,
-        isUserMessage: true,
-      }),
-      this.conversationsRepository.insert({
-        userId: userId,
-        message: message,
-        isUserMessage: false,
-      }),
-    ]);
+    await this.conversationsRepository.insert({
+      userId: userId,
+      message: createConversationDto.message,
+      isUserMessage: true,
+    });
+
+    await this.conversationsRepository.insert({
+      userId: userId,
+      message: message,
+      isUserMessage: false,
+    });
 
     return {
       message: message,

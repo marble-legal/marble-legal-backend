@@ -179,20 +179,19 @@ export class ContractsService {
 
     const message = aiResponse;
 
-    await Promise.all([
-      this.conversationsRepository.insert({
-        userId: userId,
-        message: createContractConversationDto.message,
-        isUserMessage: true,
-        contractId: id,
-      }),
-      this.conversationsRepository.insert({
-        userId: userId,
-        message: message,
-        isUserMessage: false,
-        contractId: id,
-      }),
-    ]);
+    await this.conversationsRepository.insert({
+      userId: userId,
+      message: createContractConversationDto.message,
+      isUserMessage: true,
+      contractId: id,
+    });
+
+    await this.conversationsRepository.insert({
+      userId: userId,
+      message: message,
+      isUserMessage: false,
+      contractId: id,
+    });
 
     return {
       message: message,
