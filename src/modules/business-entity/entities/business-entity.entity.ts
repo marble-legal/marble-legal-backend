@@ -36,63 +36,63 @@ export class BusinessEntity extends Base {
   @Column()
   state: string;
 
-  @Column({default: BusinessEntityStatus.InProgress})
+  @Column({ default: BusinessEntityStatus.InProgress })
   status: BusinessEntityStatus;
 
-  @Column('simple-json', {default: []})
+  @Column("simple-json", { default: [] })
   clients: BusinessEntityClient[];
 
-  @Column('simple-json', {default: []})
+  @Column("simple-json", { default: [] })
   owners: BusinessEntityOwner[];
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   isInvestorsUsCitizen?: boolean;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   isRestrictionsOnTransfer?: boolean;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   restrictionsOnTransferDetail?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   isProfitsLossSharedEqually?: boolean;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   type?: string;
 
-  @Column({nullable: true})
-  issues?: string;
+  @Column("simple-array", { default: [] })
+  issues?: string[];
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   purpose?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   agent?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   useTrademark?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   specialLicenses?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   bankAccountType?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   loanDetail?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   accountantDetail?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   managementDetail?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   signingResposibility?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   powersDetail?: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   initialOfficers?: string;
 }

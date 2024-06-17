@@ -13,6 +13,7 @@ class BusinessEntityOwnerDto {
 }
 
 export class CreateBusinessEntityDto {
+  userId: string;
   name: string;
   address: string;
   state: string;
@@ -23,7 +24,7 @@ export class CreateBusinessEntityDto {
   restrictionsOnTransferDetail?: string;
   isProfitsLossSharedEqually?: boolean;
   type?: string;
-  issues?: string;
+  issues?: string[];
   purpose?: string;
   agent?: string;
   useTrademark?: string;
