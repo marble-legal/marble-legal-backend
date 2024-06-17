@@ -11,6 +11,7 @@ import { ConversationsModule } from "./modules/conversations/conversations.modul
 import { Conversation } from "./modules/conversations/entities/conversation.entity";
 import { ContractsModule } from "./modules/contracts/contracts.module";
 import { Contract } from "./modules/contracts/entities/contract.entity";
+import { BusinessEntityModule } from './modules/business-entity/business-entity.module';
 
 const dbEntities = [User, UserSubscription, Conversation, Contract];
 
@@ -30,6 +31,7 @@ const dbEntities = [User, UserSubscription, Conversation, Contract];
     UsersModule,
     ConversationsModule,
     ContractsModule,
+    BusinessEntityModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
