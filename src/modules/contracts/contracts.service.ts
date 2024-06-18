@@ -26,12 +26,12 @@ export class ContractsService {
   ) {}
 
   async create(createContractDto: CreateContractDto, userId: string) {
-    const prompt = `${createContractDto.content}. Response must be in json format. Example: {"title":"", "summary": "", "content":""}`;
+    const prompt = `${createContractDto.content}. Response must be in json format. Example: {"title":"", "summary": "", "content":"<h1>agreemtn</h1>"}`;
     const response = await this.openAIService.suggestMessage(
       prompt,
       [],
       true,
-      "Generate a legal contract based on the details provided. Also generate title in max 5 words and summary in max 25 words. The agreement must be properly styled and formatted, and should be in a professional tone. The content of agreement must be in RTF.",
+      "Generate a legal contract based on the details provided. Also generate title in max 5 words and summary in max 25 words. The agreement must be properly styled and formatted, and should be in a professional tone. The content of agreement must be in html format.",
     );
     const aiResponse = JSON.parse(response);
 
