@@ -59,6 +59,7 @@ export class ConversationsService {
     );
 
     const message = response.data.answer;
+    const sourceDocuments = response.data?.source_documents
 
     await this.conversationsRepository.insert({
       userId: userId,
@@ -70,11 +71,12 @@ export class ConversationsService {
       userId: userId,
       message: message,
       isUserMessage: false,
+      sourceDocuments: sourceDocuments,
     });
 
     return {
       message: message,
-      sourceDocuments: response.data?.source_documents,
+      sourceDocuments: sourceDocuments,
     };
   }
 

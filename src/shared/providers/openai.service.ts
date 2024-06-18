@@ -30,9 +30,9 @@ export class OpenAIService {
 
       const params: any = {
         messages: [...messages, { role: "user", content: prompt }],
-        model: "gpt-4-1106-preview",
+        model: "gpt-4o",
         n: 1,
-        temperature: 1,
+        temperature: 0.3,
       };
 
       if (isJsonResponse) {
@@ -158,8 +158,8 @@ Question: {question}
 Helpful answer in markdown:`;
 
     const model = new LLMOpenAI({
-      temperature: 1, // increase temepreature to get more creative answers
-      modelName: "gpt-4", //change this to gpt-4 if you have access
+      temperature: 0.3, 
+      modelName: "gpt-4o", 
     });
 
     const chain = ConversationalRetrievalQAChain.fromLLM(
