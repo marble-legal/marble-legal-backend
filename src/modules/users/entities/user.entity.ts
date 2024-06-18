@@ -20,6 +20,7 @@ export enum Tier {
   INDIVIDUAL = "IN",
   SMALL_BUSINESS = "SB",
   SOLO_PRACTITIONER = "SP",
+  CUSTOMISED = "CU",
 }
 
 @Entity()

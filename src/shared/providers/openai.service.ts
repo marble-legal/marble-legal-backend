@@ -158,8 +158,8 @@ Question: {question}
 Helpful answer in markdown:`;
 
     const model = new LLMOpenAI({
-      temperature: 0.3, 
-      modelName: "gpt-4o", 
+      temperature: 0.3,
+      modelName: "gpt-4o",
     });
 
     const chain = ConversationalRetrievalQAChain.fromLLM(

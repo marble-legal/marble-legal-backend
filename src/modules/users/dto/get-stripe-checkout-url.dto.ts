@@ -22,5 +22,11 @@ export class GetStripeCheckoutUrlDto {
     enum: PlanType,
   })
   @IsEnum(PlanType)
-  readonly planType!: PlanType;
+  readonly planType: PlanType = PlanType.MONTHLY;
+
+  aiAssistant?: number = 0;
+  contractAnalysis?: number = 0;
+  contractDrafting?: number = 0;
+  businessEntity?: number = 0;
+  attorneyReview?: number = 0;
 }

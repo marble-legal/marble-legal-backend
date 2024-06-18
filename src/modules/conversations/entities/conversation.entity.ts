@@ -25,6 +25,6 @@ export class Conversation extends Base {
   @Column({ nullable: true })
   contractId?: string;
 
-  @Column('simple-array', { nullable: true })
+  @Column("simple-array", { nullable: true })
   sourceDocuments?: string[];
 }

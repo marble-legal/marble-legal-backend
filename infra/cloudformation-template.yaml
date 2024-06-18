@@ -56,7 +56,23 @@ Parameters:
     Description: Yearly Price ID for Small Business Plan
   STRIPESOLOPRACTIONERYEARLYPRICEID:
     Type: String
-    Description: Yearly Price ID for Solo Practioner Plan  
+    Description: Yearly Price ID for Solo Practioner Plan
+  STRIPEAIASSISTANTPRICEID:
+    Type: String
+    Description: Price ID for AI ASSISTANT
+  STRIPECONTRACTGENERATIONPRICEID:
+    Type: String
+    Description: Price ID for Contract generation
+  STRIPECONTRACTANALYSISPRICEID:
+    Type: String
+    Description: Price ID for Contract Analysis
+  STRIPEBUSINESSENTITYPRICEID:
+    Type: String
+    Description: Price ID for Business Entity
+  STRIPEATTORNEYREVIEWPRICEID:
+    Type: String
+    Description: Price ID for Attorney Review
+  
 
 Resources:
   ECRRepository:
@@ -153,6 +169,16 @@ Resources:
               Value: !Ref STRIPESMALLBUSINESSYEARLYPRICEID
             - Name: STRIPE_SOLO_PRACTIONER_YEARLY_PRICE_ID
               Value: !Ref STRIPESOLOPRACTIONERYEARLYPRICEID
+            - Name: STRIPE_AI_ASSISTANT_PRICE_ID
+              Value: !Ref STRIPEAIASSISTANTPRICEID
+            - Name: STRIPE_CONTRACT_GENERATION_PRICE_ID
+              Value: !Ref STRIPECONTRACTGENERATIONPRICEID
+            - Name: STRIPE_CONTRACT_ANALYSIS_PRICE_ID
+              Value: !Ref STRIPECONTRACTANALYSISPRICEID
+            - Name: STRIPE_BUSINESS_ENTITY_PRICE_ID
+              Value: !Ref STRIPEBUSINESSENTITYPRICEID
+            - Name: STRIPE_ATTORNEY_REVIEW_PRICE_ID
+              Value: !Ref STRIPEATTORNEYREVIEWPRICEID
           LogConfiguration:
             LogDriver: awslogs
             Options:

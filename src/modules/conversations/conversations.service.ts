@@ -59,7 +59,7 @@ export class ConversationsService {
     );
 
     const message = response.data.answer;
-    const sourceDocuments = response.data?.source_documents
+    const sourceDocuments = response.data?.source_documents;
 
     await this.conversationsRepository.insert({
       userId: userId,

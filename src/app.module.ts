@@ -13,8 +13,16 @@ import { ContractsModule } from "./modules/contracts/contracts.module";
 import { Contract } from "./modules/contracts/entities/contract.entity";
 import { BusinessEntityModule } from "./modules/business-entity/business-entity.module";
 import { BusinessEntity } from "./modules/business-entity/entities/business-entity.entity";
+import { UserCustomPlan } from "./modules/users/entities/user-custom-plan.entity";
 
-const dbEntities = [User, UserSubscription, Conversation, Contract, BusinessEntity];
+const dbEntities = [
+  User,
+  UserSubscription,
+  Conversation,
+  Contract,
+  BusinessEntity,
+  UserCustomPlan,
+];
 
 @Module({
   imports: [

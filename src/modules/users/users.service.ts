@@ -33,7 +33,6 @@ import {
   ReportsType,
 } from "./dto/get-reports.dto";
 import { UpdateUserStatusDto } from "./dto/update-user-status.dto";
-import { welcomeProviderTemplate } from "../../shared/welome-provider.template";
 import { GetStripeCheckoutUrlDto } from "./dto/get-stripe-checkout-url.dto";
 import { StripeService } from "src/shared/providers/stripe.service";
 import {
@@ -45,6 +44,11 @@ import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
 import { GetStripeCustomerPortalUrlDto } from "./dto/get-stripe-customer-portal-url.dto";
 import { UpdateSubscriptionDto } from "./dto/update-subscription.dto";
+import {
+  Feature,
+  UserCustomPlan,
+  UserCustomPlanStatus,
+} from "./entities/user-custom-plan.entity";
 
 const otpGenerator = require("otp-generator");
 
@@ -66,6 +70,8 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(UserSubscription)
     private userSubscriptionsRepository: Repository<UserSubscription>,
+    @InjectRepository(UserCustomPlan)
+    private userCustomPlansRepository: Repository<UserCustomPlan>,
     private readonly emailService: EmailService,
     private readonly userDataRepository: UserDataRepository,
     private readonly stripeService: StripeService,
@@ -103,6 +109,14 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException(`User with id: ${id} not found`);
       }
+
+      // if (user.tier === Tier.CUSTOMISED) {
+      //   const customPlan = await this.userCustomPlansRepository.findOneBy({
+      //     userId: id,
+      //     status: UserCustomPlanStatus.Paid,
+      //   });
+      // }
+
       return {
         id: user.id,
         fullName: user.fullName,
@@ -673,28 +687,84 @@ export class UsersService {
     user: User,
     getStripeConnectUrlDto: GetStripeCheckoutUrlDto,
   ) {
-    const session = await this.stripeService.fetchCheckoutUrl(
-      getStripeConnectUrlDto.tier,
-      getStripeConnectUrlDto.planType,
-      getStripeConnectUrlDto.redirectUrl,
-      id,
-      user.email,
-    );
+    if (getStripeConnectUrlDto.tier === Tier.CUSTOMISED) {
+      const products = [];
+      if (getStripeConnectUrlDto.aiAssistant) {
+        products.push({
+          feature: Feature.AIAssistance,
+          quantity: getStripeConnectUrlDto.aiAssistant,
+        });
+      }
+      if (getStripeConnectUrlDto.contractAnalysis) {
+        products.push({
+          feature: Feature.ContractAnalysis,
+          quantity: getStripeConnectUrlDto.contractAnalysis,
+        });
+      }
+      if (getStripeConnectUrlDto.contractDrafting) {
+        products.push({
+          feature: Feature.ContractDrafting,
+          quantity: getStripeConnectUrlDto.contractDrafting,
+        });
+      }
+      if (getStripeConnectUrlDto.businessEntity) {
+        products.push({
+          feature: Feature.BusinessEntity,
+          quantity: getStripeConnectUrlDto.businessEntity,
+        });
+      }
+      if (getStripeConnectUrlDto.attorneyReview) {
+        products.push({
+          feature: Feature.AttorneyReview,
+          quantity: getStripeConnectUrlDto.attorneyReview,
+        });
+      }
+      const session = await this.stripeService.fetchOneTimeCheckoutUrl(
+        getStripeConnectUrlDto.redirectUrl,
+        id,
+        user.email,
+        products,
+      );
+      const params = {
+        userId: id,
+        checkoutSessionId: session.id,
+        status: UserCustomPlanStatus.Initiated,
+        customerEmail: session.customer_email,
+        tier: getStripeConnectUrlDto.tier,
+        planType: getStripeConnectUrlDto.planType,
+        assignedCredit: products,
+        currentCredit: products,
+      };
 
-    const params = {
-      userId: id,
-      checkoutSessionId: session.id,
-      status: UserSubscriptionStatus.Initiated,
-      customerEmail: session.customer_email,
-      tier: getStripeConnectUrlDto.tier,
-      planType: getStripeConnectUrlDto.planType,
-    };
+      await this.userCustomPlansRepository.insert(params);
 
-    await this.userSubscriptionsRepository.insert(params);
+      return {
+        url: session.url,
+      };
+    } else {
+      const session = await this.stripeService.fetchCheckoutUrl(
+        getStripeConnectUrlDto.tier,
+        getStripeConnectUrlDto.planType,
+        getStripeConnectUrlDto.redirectUrl,
+        id,
+        user.email,
+      );
 
-    return {
-      url: session.url,
-    };
+      const params = {
+        userId: id,
+        checkoutSessionId: session.id,
+        status: UserSubscriptionStatus.Initiated,
+        customerEmail: session.customer_email,
+        tier: getStripeConnectUrlDto.tier,
+        planType: getStripeConnectUrlDto.planType,
+      };
+
+      await this.userSubscriptionsRepository.insert(params);
+
+      return {
+        url: session.url,
+      };
+    }
   }
 
   async fetchStripeCustomerPortalUrl(
@@ -797,6 +867,41 @@ export class UsersService {
     switch (event.type) {
       case "checkout.session.completed": {
         const data = event.data;
+
+        if (
+          data.object.subscription === null ||
+          data.object.subscription === undefined
+        ) {
+          // customised plan payment
+          const paymentStatus =
+            data.object.payment_status === "paid"
+              ? UserCustomPlanStatus.Paid
+              : UserCustomPlanStatus.Cancelled;
+          await Promise.all([
+            this.userCustomPlansRepository.update(
+              {
+                checkoutSessionId: data.object.id,
+                userId: data.object.client_reference_id,
+              },
+              {
+                status: paymentStatus,
+                amount: data.object.amount_subtotal / 100,
+                currency: data.object.currency,
+                customerId: data.object.customer,
+              },
+            ),
+            this.usersRepository.update(
+              {
+                id: data.object.client_reference_id,
+              },
+              {
+                stripeCustomerId: data.object.customer,
+              },
+            ),
+          ]);
+          return;
+        }
+
         const subscriptionStatus =
           data.object.payment_status === "paid"
             ? UserSubscriptionStatus.Paid
