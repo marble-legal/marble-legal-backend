@@ -70,7 +70,7 @@ export class ContractsService {
 
   async createPdf(content: string) {
     const options = {
-      height: "1000mm",
+      height: "800mm",
       width: "210mm",
       orientation: "portrait",
       directory: os.tmpdir(),
@@ -84,7 +84,7 @@ export class ContractsService {
 
     try {
       const create = util.promisify(pdf.create);
-      return await create(content, options);
+      return await create(`<html><body>${content}</body></html>`, options);
     } catch (error) {
       throw error;
     }
