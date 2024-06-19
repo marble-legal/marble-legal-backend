@@ -72,7 +72,8 @@ export class ContractsService {
   async createPdf(content: string) {
     try {
       const browser = await puppeteer.launch({
-        headless: 'new'
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-dev-shm-usage'],
       });
       const page = await browser.newPage();
 
