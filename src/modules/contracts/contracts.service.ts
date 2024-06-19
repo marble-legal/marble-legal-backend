@@ -50,7 +50,7 @@ export class ContractsService {
     const url = await this.fileUploaderService.uploadContent(
       'tnc.pdf',
       `app/users/${userId}/contracts/${contractObj.id}`,
-      `${contractObj.id}.pdf`,
+      `${contractObj.title}.pdf`,
       "application/pdf",
     );
 
