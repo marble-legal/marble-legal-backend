@@ -75,7 +75,7 @@ export class StripeService {
         userId,
       },
       customer_email: email,
-      success_url: `${redirectUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${redirectUrl}?session_id={CHECKOUT_SESSION_ID}`,
       allow_promotion_codes: true,
       cancel_url: `${redirectUrl}/error`,
     });
