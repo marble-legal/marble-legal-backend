@@ -13,6 +13,7 @@ import * as fs from "fs";
 const util = require("util");
 const pdf = require("html-pdf");
 const os = require("os");
+const puppeteer = require('puppeteer');
 
 @Injectable()
 export class ContractsService {
@@ -31,7 +32,7 @@ export class ContractsService {
       prompt,
       [],
       true,
-      "Generate a legal contract based on the details provided. Also generate title in max 5 words and summary in max 25 words. The agreement must be properly styled and formatted, and should be in a professional tone. The content of agreement must be in html format.",
+      "Generate a legal contract based on the details provided. Also generate title in max 5 words and summary in max 25 words. The agreement must be properly styled and formatted, must have some margins on all sides and should be in a professional tone. The content of agreement must be in html format without <html>, <head> and <body> tag.",
     );
     const aiResponse = JSON.parse(response);
 
@@ -45,9 +46,9 @@ export class ContractsService {
       isGenerated: true,
     });
 
-    const pdfPath = await this.createPdf(aiResponse.content);
+    await this.createPdf(aiResponse.content);
     const url = await this.fileUploaderService.uploadContent(
-      pdfPath.filename,
+      'tnc.pdf',
       `app/users/${userId}/contracts/${contractObj.id}`,
       `${contractObj.id}.pdf`,
       "application/pdf",
@@ -69,22 +70,25 @@ export class ContractsService {
   }
 
   async createPdf(content: string) {
-    const options = {
-      height: "800mm",
-      width: "210mm",
-      orientation: "portrait",
-      directory: os.tmpdir(),
-      filename: "tnc.pdf",
-      childProcessOptions: {
-        env: {
-          OPENSSL_CONF: "/dev/null",
-        },
-      },
-    };
-
     try {
-      const create = util.promisify(pdf.create);
-      return await create(`<html><body>${content}</body></html>`, options);
+      const browser = await puppeteer.launch({
+        headless: 'new'
+      });
+      const page = await browser.newPage();
+
+      // Set the HTML content to the page
+      await page.setContent(`<html><body>${content}</body></html>`, {
+          waitUntil: 'domcontentloaded'
+      });
+
+      // Convert the page to PDF
+      await page.pdf({
+          path: 'tnc.pdf',
+          format: 'A4'
+      });
+
+      // Close the browser
+      await browser.close();
     } catch (error) {
       throw error;
     }
@@ -111,7 +115,7 @@ export class ContractsService {
   ) {
     const pdfPath = await this.createPdf(updateContractDto.content);
     const url = await this.fileUploaderService.uploadContent(
-      pdfPath.filename,
+      'tnc.pdf',
       `app/users/${userId}/contracts`,
       `${id}.pdf`,
       "application/pdf",

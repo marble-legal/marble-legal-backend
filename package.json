@@ -49,6 +49,7 @@
     "passport-local": "^1.0.0",
     "pdf-parse": "^1.1.1",
     "pg": "^8.11.3",
+    "puppeteer": "^19.11.1",
     "reflect-metadata": "^0.2.1",
     "rimraf": "^5.0.5",
     "rxjs": "^7.8.1",
