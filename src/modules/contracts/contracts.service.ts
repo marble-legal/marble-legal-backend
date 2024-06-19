@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { UpdateContractDto } from "./dto/update-contract.dto";
 import { Contract } from "./entities/contract.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 import { OpenAIService } from "src/shared/providers/openai.service";
 import { GetContractsDto } from "./dto/get-contracts.dto";
 import { FileUploaderService } from "src/shared/providers/file-uploader.service";
@@ -13,7 +13,7 @@ import * as fs from "fs";
 const util = require("util");
 const pdf = require("html-pdf");
 const os = require("os");
-const puppeteer = require('puppeteer');
+const puppeteer = require("puppeteer");
 
 @Injectable()
 export class ContractsService {
@@ -48,7 +48,7 @@ export class ContractsService {
 
     await this.createPdf(aiResponse.content);
     const url = await this.fileUploaderService.uploadContent(
-      'tnc.pdf',
+      "tnc.pdf",
       `app/users/${userId}/contracts/${contractObj.id}`,
       `${contractObj.title}.pdf`,
       "application/pdf",
@@ -72,20 +72,20 @@ export class ContractsService {
   async createPdf(content: string) {
     try {
       const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-dev-shm-usage'],
+        headless: "new",
+        args: ["--no-sandbox", "--disable-dev-shm-usage"],
       });
       const page = await browser.newPage();
 
       // Set the HTML content to the page
       await page.setContent(`<html><body>${content}</body></html>`, {
-          waitUntil: 'domcontentloaded'
+        waitUntil: "domcontentloaded",
       });
 
       // Convert the page to PDF
       await page.pdf({
-          path: 'tnc.pdf',
-          format: 'A4'
+        path: "tnc.pdf",
+        format: "A4",
       });
 
       // Close the browser
@@ -114,11 +114,17 @@ export class ContractsService {
     updateContractDto: UpdateContractDto,
     userId: string,
   ) {
-    const pdfPath = await this.createPdf(updateContractDto.content);
+    const contract = await this.contractsRepository.findOneBy({
+      id: id,
+    });
+    if (!contract) {
+      throw new NotFoundException("Contract not found");
+    }
+    await this.createPdf(updateContractDto.content);
     const url = await this.fileUploaderService.uploadContent(
-      'tnc.pdf',
+      "tnc.pdf",
       `app/users/${userId}/contracts`,
-      `${id}.pdf`,
+      `${contract.title}.pdf`,
       "application/pdf",
     );
 

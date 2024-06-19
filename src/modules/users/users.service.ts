@@ -689,31 +689,46 @@ export class UsersService {
   ) {
     if (getStripeConnectUrlDto.tier === Tier.CUSTOMISED) {
       const products = [];
-      if (getStripeConnectUrlDto.aiAssistant && getStripeConnectUrlDto.aiAssistant > 0) {
+      if (
+        getStripeConnectUrlDto.aiAssistant &&
+        getStripeConnectUrlDto.aiAssistant > 0
+      ) {
         products.push({
           feature: Feature.AIAssistance,
           quantity: getStripeConnectUrlDto.aiAssistant,
         });
       }
-      if (getStripeConnectUrlDto.contractAnalysis && getStripeConnectUrlDto.contractAnalysis > 0) {
+      if (
+        getStripeConnectUrlDto.contractAnalysis &&
+        getStripeConnectUrlDto.contractAnalysis > 0
+      ) {
         products.push({
           feature: Feature.ContractAnalysis,
           quantity: getStripeConnectUrlDto.contractAnalysis,
         });
       }
-      if (getStripeConnectUrlDto.contractDrafting && getStripeConnectUrlDto.contractDrafting > 0) {
+      if (
+        getStripeConnectUrlDto.contractDrafting &&
+        getStripeConnectUrlDto.contractDrafting > 0
+      ) {
         products.push({
           feature: Feature.ContractDrafting,
           quantity: getStripeConnectUrlDto.contractDrafting,
         });
       }
-      if (getStripeConnectUrlDto.businessEntity && getStripeConnectUrlDto.businessEntity > 0) {
+      if (
+        getStripeConnectUrlDto.businessEntity &&
+        getStripeConnectUrlDto.businessEntity > 0
+      ) {
         products.push({
           feature: Feature.BusinessEntity,
           quantity: getStripeConnectUrlDto.businessEntity,
         });
       }
-      if (getStripeConnectUrlDto.attorneyReview && getStripeConnectUrlDto.attorneyReview > 0) {
+      if (
+        getStripeConnectUrlDto.attorneyReview &&
+        getStripeConnectUrlDto.attorneyReview > 0
+      ) {
         products.push({
           feature: Feature.AttorneyReview,
           quantity: getStripeConnectUrlDto.attorneyReview,
