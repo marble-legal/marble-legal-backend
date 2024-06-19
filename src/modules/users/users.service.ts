@@ -689,31 +689,31 @@ export class UsersService {
   ) {
     if (getStripeConnectUrlDto.tier === Tier.CUSTOMISED) {
       const products = [];
-      if (getStripeConnectUrlDto.aiAssistant) {
+      if (getStripeConnectUrlDto.aiAssistant && getStripeConnectUrlDto.aiAssistant > 0) {
         products.push({
           feature: Feature.AIAssistance,
           quantity: getStripeConnectUrlDto.aiAssistant,
         });
       }
-      if (getStripeConnectUrlDto.contractAnalysis) {
+      if (getStripeConnectUrlDto.contractAnalysis && getStripeConnectUrlDto.contractAnalysis > 0) {
         products.push({
           feature: Feature.ContractAnalysis,
           quantity: getStripeConnectUrlDto.contractAnalysis,
         });
       }
-      if (getStripeConnectUrlDto.contractDrafting) {
+      if (getStripeConnectUrlDto.contractDrafting && getStripeConnectUrlDto.contractDrafting > 0) {
         products.push({
           feature: Feature.ContractDrafting,
           quantity: getStripeConnectUrlDto.contractDrafting,
         });
       }
-      if (getStripeConnectUrlDto.businessEntity) {
+      if (getStripeConnectUrlDto.businessEntity && getStripeConnectUrlDto.businessEntity > 0) {
         products.push({
           feature: Feature.BusinessEntity,
           quantity: getStripeConnectUrlDto.businessEntity,
         });
       }
-      if (getStripeConnectUrlDto.attorneyReview) {
+      if (getStripeConnectUrlDto.attorneyReview && getStripeConnectUrlDto.attorneyReview > 0) {
         products.push({
           feature: Feature.AttorneyReview,
           quantity: getStripeConnectUrlDto.attorneyReview,
@@ -786,16 +786,18 @@ export class UsersService {
 
   async fetchSubscriptions(id: string) {
     const currentDate = new Date();
-    return await this.userSubscriptionsRepository.find({
+    const fixedPlans = await this.userSubscriptionsRepository.find({
       where: [
         {
           userId: id,
           status: UserSubscriptionStatus.Paid,
+          isActive: true,
         },
         {
           userId: id,
           status: UserSubscriptionStatus.Cancelled,
           cancelledAt: MoreThan(currentDate),
+          isActive: true,
         },
       ],
       order: {
@@ -803,6 +805,25 @@ export class UsersService {
       },
       take: 1,
     });
+
+    if (fixedPlans.length > 0) {
+      return fixedPlans;
+    }
+
+    const customPlans = await this.userCustomPlansRepository.find({
+      where: [
+        {
+          userId: id,
+          status: UserCustomPlanStatus.Paid,
+        },
+      ],
+      order: {
+        createdAt: "DESC",
+      },
+      take: 1,
+    });
+
+    return customPlans;
   }
 
   async updateSubscription(
@@ -878,6 +899,22 @@ export class UsersService {
               ? UserCustomPlanStatus.Paid
               : UserCustomPlanStatus.Cancelled;
           await Promise.all([
+            this.userSubscriptionsRepository.update(
+              {
+                userId: data.object.client_reference_id,
+              },
+              {
+                isActive: false,
+              },
+            ),
+            this.usersRepository.update(
+              {
+                id: data.object.client_reference_id,
+              },
+              {
+                tier: Tier.CUSTOMISED,
+              },
+            ),
             this.userCustomPlansRepository.update(
               {
                 checkoutSessionId: data.object.id,
@@ -907,6 +944,14 @@ export class UsersService {
             ? UserSubscriptionStatus.Paid
             : UserSubscriptionStatus.Cancelled;
         await Promise.all([
+          this.userCustomPlansRepository.update(
+            {
+              userId: data.object.client_reference_id,
+            },
+            {
+              isActive: false,
+            },
+          ),
           this.userSubscriptionsRepository.update(
             {
               checkoutSessionId: data.object.id,
