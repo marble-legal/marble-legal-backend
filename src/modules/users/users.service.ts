@@ -838,7 +838,13 @@ export class UsersService {
       take: 1,
     });
 
-    return customPlans;
+    return customPlans.map(plan => {
+      return {
+        ...plan,
+        tier: Tier.CUSTOMISED,
+        planType: PlanType.MONTHLY,
+      }
+    });
   }
 
   async updateSubscription(
