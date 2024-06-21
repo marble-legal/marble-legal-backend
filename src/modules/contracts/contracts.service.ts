@@ -96,10 +96,13 @@ export class ContractsService {
   }
 
   async findAll(getContractsDto: GetContractsDto) {
-    return await this.contractsRepository.findBy({
-      userId: getContractsDto.userId,
-      isActive: true,
-      isGenerated: getContractsDto.isGenerated,
+    return await this.contractsRepository.find({
+      where: {
+        userId: getContractsDto.userId,
+        isActive: true,
+        isGenerated: getContractsDto.isGenerated,
+      },
+      order: { createdAt: "DESC" },
     });
   }
 
