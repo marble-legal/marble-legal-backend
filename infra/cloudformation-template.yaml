@@ -207,6 +207,15 @@ Resources:
       SecurityGroups:
         - sg-0aebf96e805f15b59
 
+  LoadBalancerAttributes:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancerAttribute
+    DependsOn: LoadBalancer
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Attributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "120"
+
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
