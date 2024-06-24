@@ -206,13 +206,7 @@ Resources:
         - subnet-0fe0d75d1f9673051
       SecurityGroups:
         - sg-0aebf96e805f15b59
-
-  LoadBalancerAttributes:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancerAttribute
-    DependsOn: LoadBalancer
-    Properties:
-      LoadBalancerArn: !Ref LoadBalancer
-      Attributes:
+      LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: "120"
 
