@@ -208,7 +208,7 @@ Resources:
         - sg-0aebf96e805f15b59
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
-          Value: "120"
+          Value: "600"
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
