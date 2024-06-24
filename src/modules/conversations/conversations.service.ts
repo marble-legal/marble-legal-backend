@@ -1,21 +1,28 @@
-import { Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
 import { Conversation } from "./entities/conversation.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
 import { UpdateConversationDto } from "./dto/update-conversation.dto";
-import { OpenAIService } from "src/shared/providers/openai.service";
 import axios from "axios";
+import { SubscriptionService } from "../subscription/subscription.service";
+import { Feature } from "../users/entities/user-custom-plan.entity";
 
 @Injectable()
 export class ConversationsService {
   constructor(
     @InjectRepository(Conversation)
     private conversationsRepository: Repository<Conversation>,
-    private readonly openAIService: OpenAIService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   async create(createConversationDto: CreateConversationDto, userId: string) {
+    const canUseFeature = await this.subscriptionService.canUseFeature(Feature.AIAssistance, userId)
+    
+    if (!canUseFeature) {
+      throw new ForbiddenException(`You don't have credit balance to use this feature.`)
+    }
+
     const previousConversations = await this.conversationsRepository.find({
       where: {
         userId: userId,
@@ -73,6 +80,8 @@ export class ConversationsService {
       isUserMessage: false,
       sourceDocuments: sourceDocuments,
     });
+
+    await this.subscriptionService.deductCreditOnUsingFeature(Feature.AIAssistance, userId)
 
     return {
       message: message,

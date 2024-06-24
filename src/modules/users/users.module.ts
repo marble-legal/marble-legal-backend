@@ -11,11 +11,13 @@ import { StripeService } from "src/shared/providers/stripe.service";
 import { ContractsService } from "../contracts/contracts.service";
 import { ContractsModule } from "../contracts/contracts.module";
 import { UserCustomPlan } from "./entities/user-custom-plan.entity";
+import { SubscriptionModule } from "../subscription/subscription.module";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserSubscription, UserCustomPlan]),
+    TypeOrmModule.forFeature([User]),
     ContractsModule,
+    SubscriptionModule,
   ],
   controllers: [UsersController],
   providers: [

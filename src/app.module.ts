@@ -14,6 +14,7 @@ import { Contract } from "./modules/contracts/entities/contract.entity";
 import { BusinessEntityModule } from "./modules/business-entity/business-entity.module";
 import { BusinessEntity } from "./modules/business-entity/entities/business-entity.entity";
 import { UserCustomPlan } from "./modules/users/entities/user-custom-plan.entity";
+import { SubscriptionModule } from "./modules/subscription/subscription.module";
 
 const dbEntities = [
   User,
@@ -41,6 +42,7 @@ const dbEntities = [
     ConversationsModule,
     ContractsModule,
     BusinessEntityModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

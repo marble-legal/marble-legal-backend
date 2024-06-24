@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { UpdateContractDto } from "./dto/update-contract.dto";
 import { Contract } from "./entities/contract.entity";
@@ -10,6 +10,9 @@ import { FileUploaderService } from "src/shared/providers/file-uploader.service"
 import { Conversation } from "../conversations/entities/conversation.entity";
 import { CreateContractConversationDto } from "./dto/create-contract-conversation.dto";
 import * as fs from "fs";
+import axios from "axios";
+import { SubscriptionService } from "../subscription/subscription.service";
+import { Feature } from "../users/entities/user-custom-plan.entity";
 const util = require("util");
 const pdf = require("html-pdf");
 const os = require("os");
@@ -24,29 +27,51 @@ export class ContractsService {
     private conversationsRepository: Repository<Conversation>,
     private readonly openAIService: OpenAIService,
     private readonly fileUploaderService: FileUploaderService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   async create(createContractDto: CreateContractDto, userId: string) {
-    const prompt = `${createContractDto.content}. Response must be in json format. Example: {"title":"", "summary": "", "content":"<h1>agreemtn</h1>"}`;
-    const response = await this.openAIService.suggestMessage(
-      prompt,
-      [],
-      true,
-      "Generate a legal contract based on the details provided. Also generate title in max 5 words and summary in max 25 words. The agreement must be properly styled and formatted, must have some margins on all sides and should be in a professional tone. The content of agreement must be in html format without <html>, <head> and <body> tag.",
+    const canUseFeature = await this.subscriptionService.canUseFeature(Feature.ContractDrafting, userId)
+    
+    if (!canUseFeature) {
+      throw new ForbiddenException(`You don't have credit balance to use this feature.`)
+    }
+    
+    // const prompt = `${createContractDto.content}. Response must be in json format. Example: {"title":"", "summary": "", "content":"<h1>agreemtn</h1>"}`;
+    // const response = await this.openAIService.suggestMessage(
+    //   prompt,
+    //   [],
+    //   true,
+    //   "Generate a legal contract based on the details provided. Also generate title in max 5 words and summary in max 25 words. The agreement must be properly styled and formatted, must have some margins on all sides and should be in a professional tone. The content of agreement must be in html format without <html>, <head> and <body> tag.",
+    // );
+    // const aiResponse = JSON.parse(response);
+
+    const response = await axios.post(
+      "https://contract-rag.api.marblels.com/app/chat",
+      {
+        query: createContractDto.content,
+        contract_type: createContractDto.type,
+      },
+      {
+        headers: {
+          "x-api-key": process.env.CONTRACT_RAG_API_KEY,
+        },
+      },
     );
-    const aiResponse = JSON.parse(response);
+
+    const responseData = response.data;
 
     const contractObj = await this.contractsRepository.save({
       type: createContractDto.type,
       userId: userId,
-      title: aiResponse.title,
-      summary: aiResponse.summary,
+      title: responseData.title,
+      summary: responseData.summary,
       content: createContractDto.content,
-      generatedContent: aiResponse.content,
+      generatedContent: responseData.html,
       isGenerated: true,
     });
 
-    await this.createPdf(aiResponse.content);
+    await this.createPdf(responseData.html);
     const url = await this.fileUploaderService.uploadContent(
       "tnc.pdf",
       `app/users/${userId}/contracts/${contractObj.id}`,
@@ -54,14 +79,17 @@ export class ContractsService {
       "application/pdf",
     );
 
-    await this.contractsRepository.update(
-      {
-        id: contractObj.id,
-      },
-      {
-        pdfUrl: url.Location,
-      },
-    );
+    await Promise.all([
+      this.contractsRepository.update(
+        {
+          id: contractObj.id,
+        },
+        {
+          pdfUrl: url.Location,
+        },
+      ),
+      this.subscriptionService.deductCreditOnUsingFeature(Feature.ContractDrafting, userId)
+    ]);
 
     return {
       ...contractObj,
@@ -162,6 +190,12 @@ export class ContractsService {
     createContractConversationDto: CreateContractConversationDto,
     userId: string,
   ) {
+    const canUseFeature = await this.subscriptionService.canUseFeature(Feature.ContractAnalysis, userId)
+    
+    if (!canUseFeature) {
+      throw new ForbiddenException(`You don't have credit balance to use this feature.`)
+    }
+
     const previousConversations = await this.conversationsRepository.find({
       where: {
         contractId: id,
@@ -206,6 +240,8 @@ export class ContractsService {
       isUserMessage: false,
       contractId: id,
     });
+
+    await this.subscriptionService.deductCreditOnUsingFeature(Feature.ContractAnalysis, userId)
 
     return {
       message: message,

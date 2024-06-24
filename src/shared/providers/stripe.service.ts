@@ -78,6 +78,7 @@ export class StripeService {
       success_url: `${redirectUrl}?session_id={CHECKOUT_SESSION_ID}`,
       allow_promotion_codes: true,
       cancel_url: `${redirectUrl}/error`,
+      // customer_creation: 'always'
     });
 
     return session;

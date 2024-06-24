@@ -33,6 +33,7 @@ import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
 import { GetStripeCustomerPortalUrlDto } from "./dto/get-stripe-customer-portal-url.dto";
 import { UpdateSubscriptionDto } from "./dto/update-subscription.dto";
+import { SubscriptionService } from "../subscription/subscription.service";
 
 @ApiTags("User Management")
 @Controller("users")
@@ -40,6 +41,7 @@ export class UsersController {
   constructor(
     private readonly userService: UsersService,
     private readonly contractsService: ContractsService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -205,7 +207,7 @@ export class UsersController {
     @Request() req,
     @Query() getStripeCheckoutUrlDto: GetStripeCheckoutUrlDto,
   ) {
-    return this.userService.fetchStripeCheckoutUrl(
+    return this.subscriptionService.fetchStripeCheckoutUrl(
       id,
       req.user,
       getStripeCheckoutUrlDto,
@@ -220,7 +222,7 @@ export class UsersController {
     @Request() req,
     @Query() getStripeCustomerPortalUrlDto: GetStripeCustomerPortalUrlDto,
   ) {
-    return this.userService.fetchStripeCustomerPortalUrl(
+    return this.subscriptionService.fetchStripeCustomerPortalUrl(
       id,
       getStripeCustomerPortalUrlDto,
     );
@@ -230,7 +232,7 @@ export class UsersController {
   @ApiBearerAuth()
   @Get(":id/subscriptions")
   fetchSubscriptions(@Param("id") id: string) {
-    return this.userService.fetchSubscriptions(id);
+    return this.subscriptionService.fetchSubscriptions(id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -240,7 +242,7 @@ export class UsersController {
     @Param("id") id: string,
     @Param("subscriptionId") subscriptionId: string,
   ) {
-    return this.userService.cancelSubscription(subscriptionId, id);
+    return this.subscriptionService.cancelSubscription(subscriptionId, id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -251,7 +253,7 @@ export class UsersController {
     @Param("subscriptionId") subscriptionId: string,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
   ) {
-    return this.userService.updateSubscription(
+    return this.subscriptionService.updateSubscription(
       subscriptionId,
       id,
       updateSubscriptionDto,

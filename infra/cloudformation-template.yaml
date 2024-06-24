@@ -36,6 +36,9 @@ Parameters:
   RAGAPIKEY:
     Type: String
     Description: RAG API Key
+  CONTRACTRAGAPIKEY:
+    Type: String
+    Description: CONTRACT RAG API Key
   STRIPESECRETKEY:
     Type: String
     Description: The secret key for stripe
@@ -155,6 +158,8 @@ Resources:
               Value: !Ref OPENAIAPIKEY
             - Name: RAG_API_KEY
               Value: !Ref RAGAPIKEY
+            - Name: CONTRACT_RAG_API_KEY
+              Value: !Ref CONTRACTRAGAPIKEY
             - Name: STRIPE_SECRET_KEY
               Value: !Ref STRIPESECRETKEY
             - Name: STRIPE_INDIVIDUAL_MONTHLY_PRICE_ID

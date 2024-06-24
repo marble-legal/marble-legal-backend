@@ -6,9 +6,10 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { OpenAIService } from "src/shared/providers/openai.service";
 import { FileUploaderService } from "src/shared/providers/file-uploader.service";
 import { Conversation } from "../conversations/entities/conversation.entity";
+import { SubscriptionModule } from "../subscription/subscription.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Contract, Conversation])],
+  imports: [TypeOrmModule.forFeature([Contract, Conversation]), SubscriptionModule],
   controllers: [ContractsController],
   providers: [ContractsService, OpenAIService, FileUploaderService],
   exports: [ContractsService],
