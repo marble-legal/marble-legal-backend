@@ -6,8 +6,6 @@ import {
 } from "@nestjs/common";
 import {
   LoginState,
-  PlanType,
-  Tier,
   User,
   UserType,
 } from "./entities/user.entity";
@@ -33,22 +31,9 @@ import {
   ReportsType,
 } from "./dto/get-reports.dto";
 import { UpdateUserStatusDto } from "./dto/update-user-status.dto";
-import { GetStripeCheckoutUrlDto } from "./dto/get-stripe-checkout-url.dto";
-import { StripeService } from "src/shared/providers/stripe.service";
-import {
-  UserSubscription,
-  UserSubscriptionStatus,
-} from "./entities/user-subscription.entity";
-import { ContractsService } from "../contracts/contracts.service";
 import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
-import { GetStripeCustomerPortalUrlDto } from "./dto/get-stripe-customer-portal-url.dto";
-import { UpdateSubscriptionDto } from "./dto/update-subscription.dto";
-import {
-  Feature,
-  UserCustomPlan,
-  UserCustomPlanStatus,
-} from "./entities/user-custom-plan.entity";
+import { SubscriptionService } from "../subscription/subscription.service";
 
 const otpGenerator = require("otp-generator");
 
@@ -70,6 +55,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
     private readonly emailService: EmailService,
     private readonly userDataRepository: UserDataRepository,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   async createUser(
@@ -501,15 +487,18 @@ export class UsersService {
       );
     }
 
-    const [totalUsers] = await Promise.all([
+    const [totalUsers, totalSubscriptions] = await Promise.all([
       this.usersRepository.countBy({
         userType: UserType.User,
         isActive: true,
       }),
+      this.subscriptionService.fetchTotalSubscriptions(),
     ]);
 
     return {
       totalUsers,
+      totalRevenue: 0,
+      totalSubscriptions: totalSubscriptions,
     };
   }
 

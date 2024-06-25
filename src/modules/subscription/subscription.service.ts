@@ -356,6 +356,22 @@ export class SubscriptionService {
     );
   }
 
+  async fetchTotalSubscriptions() {
+    const subscriptions = await this.userSubscriptionsRepository.count({
+      where: {
+        status: UserSubscriptionStatus.Paid,
+      },
+    });
+
+    const customPlans = await this.userCustomPlansRepository.count({
+      where: {
+        status: UserCustomPlanStatus.Paid,
+      },
+    });
+
+    return subscriptions + customPlans;
+  }
+
   async handleStripeWebhook(event: any) {
     switch (event.type) {
       case "checkout.session.completed": {
