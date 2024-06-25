@@ -402,6 +402,7 @@ export class SubscriptionService {
               {
                 tier: Tier.CUSTOMISED,
                 stripeCustomerId: data.object.customer,
+                planType: PlanType.MONTHLY,
               },
             ),
             this.userCustomPlansRepository.update(

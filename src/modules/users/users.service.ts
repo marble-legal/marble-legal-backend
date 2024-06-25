@@ -34,6 +34,7 @@ import { UpdateUserStatusDto } from "./dto/update-user-status.dto";
 import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
 import { SubscriptionService } from "../subscription/subscription.service";
+import { ContractsService } from "../contracts/contracts.service";
 
 const otpGenerator = require("otp-generator");
 
@@ -56,6 +57,7 @@ export class UsersService {
     private readonly emailService: EmailService,
     private readonly userDataRepository: UserDataRepository,
     private readonly subscriptionService: SubscriptionService,
+    private readonly contractsService: ContractsService,
   ) {}
 
   async createUser(
@@ -81,7 +83,7 @@ export class UsersService {
     return await this.userDataRepository.findUsers(getUsersDto);
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, detail = false) {
     try {
       const user = await this.usersRepository.findOneBy({
         id: id,
@@ -91,12 +93,18 @@ export class UsersService {
         throw new NotFoundException(`User with id: ${id} not found`);
       }
 
-      // if (user.tier === Tier.CUSTOMISED) {
-      //   const customPlan = await this.userCustomPlansRepository.findOneBy({
-      //     userId: id,
-      //     status: UserCustomPlanStatus.Paid,
-      //   });
-      // }
+      let totalDrafts = 0
+      let totalAnalysis = 0
+
+      if (detail) {
+        const [drafts, analysis] = await Promise.all([
+          this.contractsService.count(id, true),
+          this.contractsService.count(id, false),
+        ]);
+
+        totalDrafts = drafts
+        totalAnalysis = analysis
+      }
 
       return {
         id: user.id,
@@ -105,6 +113,11 @@ export class UsersService {
         profileImg: user.profileImg,
         type: user.userType,
         isEmailNotificationOn: user.isEmailNotificationOn,
+        tier: user.tier,
+        planType: user.planType,
+        lastActive: user.lastActive,
+        totalDrafts: totalDrafts,
+        totalAnalysis: totalAnalysis,
       };
     } catch (err: any) {
       throw err;

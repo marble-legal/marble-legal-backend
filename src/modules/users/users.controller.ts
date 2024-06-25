@@ -55,7 +55,7 @@ export class UsersController {
   @ApiBearerAuth()
   @Get(":id")
   findOne(@Param("id") id: string) {
-    return this.userService.findOne(id);
+    return this.userService.findOne(id, true);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -32,7 +32,7 @@ export class BusinessEntityController {
   @ApiBearerAuth()
   @Get()
   findAll(@Query() getBusinessEntitiesDto: GetBusinessEntitiesDto) {
-    return this.businessEntityService.findAll(getBusinessEntitiesDto.userId);
+    return this.businessEntityService.findAll(getBusinessEntitiesDto);
   }
 
   @UseGuards(JwtAuthGuard)

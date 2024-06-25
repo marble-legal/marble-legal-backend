@@ -140,6 +140,14 @@ export class ContractsService {
     });
   }
 
+  async count(userId: string, isGenerated: boolean) {
+    return await this.contractsRepository.countBy({
+      isActive: true,
+      userId: userId,
+      isGenerated: isGenerated,
+    })
+  }
+
   async update(
     id: string,
     updateContractDto: UpdateContractDto,

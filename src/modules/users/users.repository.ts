@@ -12,7 +12,7 @@ export class UserDataRepository {
     const searchQuery =
       getUsersDto.searchKeyword !== undefined &&
       getUsersDto.searchKeyword !== ""
-        ? `and ("firstName" LIKE '%${getUsersDto.searchKeyword}%' or "lastName" LIKE '%${getUsersDto.searchKeyword}%' or "email" LIKE '%${getUsersDto.searchKeyword}%')`
+        ? `and ("fullName" ILIKE '%${getUsersDto.searchKeyword}%' or "email" ILIKE '%${getUsersDto.searchKeyword}%')`
         : "";
 
     const results: any[] = await this.dbConnection.query(
@@ -34,11 +34,13 @@ export class UserDataRepository {
     return results.map((user) => {
       return {
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        fullName: user.fullName,
         email: user.email,
         profileImg: user.profileImg,
         joinedOn: user.createdAt,
+        tier: user.tier,
+        planType: user.planType,
+        lastActive: user.lastActive,
       };
     });
   }
