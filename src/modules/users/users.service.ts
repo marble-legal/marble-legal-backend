@@ -4,11 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
-import {
-  LoginState,
-  User,
-  UserType,
-} from "./entities/user.entity";
+import { LoginState, User, UserType } from "./entities/user.entity";
 import * as dotenv from "dotenv";
 import { InjectRepository } from "@nestjs/typeorm";
 import { MoreThan, Repository } from "typeorm";
@@ -35,6 +31,7 @@ import { UpdateUserEmailDto } from "./dto/update-user-email.dto";
 import { DeleteUserDto } from "./dto/delete-user.dto";
 import { SubscriptionService } from "../subscription/subscription.service";
 import { ContractsService } from "../contracts/contracts.service";
+import { UserPayment } from "./entities/user-payment.entity";
 
 const otpGenerator = require("otp-generator");
 
@@ -54,6 +51,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(UserPayment)
+    private userPaymentsRepository: Repository<UserPayment>,
     private readonly emailService: EmailService,
     private readonly userDataRepository: UserDataRepository,
     private readonly subscriptionService: SubscriptionService,
@@ -93,8 +92,8 @@ export class UsersService {
         throw new NotFoundException(`User with id: ${id} not found`);
       }
 
-      let totalDrafts = 0
-      let totalAnalysis = 0
+      let totalDrafts = 0;
+      let totalAnalysis = 0;
 
       if (detail) {
         const [drafts, analysis] = await Promise.all([
@@ -102,8 +101,8 @@ export class UsersService {
           this.contractsService.count(id, false),
         ]);
 
-        totalDrafts = drafts
-        totalAnalysis = analysis
+        totalDrafts = drafts;
+        totalAnalysis = analysis;
       }
 
       return {
@@ -500,17 +499,20 @@ export class UsersService {
       );
     }
 
-    const [totalUsers, totalSubscriptions] = await Promise.all([
+    const [totalUsers, totalSubscriptions, totalRevenue] = await Promise.all([
       this.usersRepository.countBy({
         userType: UserType.User,
         isActive: true,
       }),
       this.subscriptionService.fetchTotalSubscriptions(),
+      this.userPaymentsRepository.sum("amount", {
+        isActive: true,
+      }),
     ]);
 
     return {
       totalUsers,
-      totalRevenue: 0,
+      totalRevenue: totalRevenue,
       totalSubscriptions: totalSubscriptions,
     };
   }
@@ -519,6 +521,10 @@ export class UsersService {
     switch (getReportsDto.type) {
       case ReportsType.USERS_COUNT: {
         return this.fetchUsersReport(getReportsDto);
+      }
+
+      case ReportsType.REVENUE: {
+        return this.fetchRevenueReport(getReportsDto);
       }
     }
   }
@@ -657,6 +663,136 @@ export class UsersService {
               day,
               count:
                 users.find((r) => r.date.toISOString().split("T")[0] === day)
+                  ?.count ?? 0,
+            };
+          }),
+        };
+      }
+    }
+  }
+
+  async fetchRevenueReport(getReportsDto: GetReportsDto) {
+    switch (getReportsDto.duration) {
+      case ReportDuration.CURRENT_WEEK: {
+        const currentDate = new Date();
+
+        const startDate = new Date(currentDate);
+        startDate.setDate(currentDate.getDate() - currentDate.getDay());
+
+        const allDays = [];
+        for (let index = 0; index < 7; index++) {
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + index);
+          allDays.push(date.toISOString().split("T")[0]);
+        }
+
+        const [revenue] = await Promise.all([
+          this.userDataRepository.findRevenueReports(getReportsDto),
+        ]);
+
+        return {
+          revenue: allDays.map((day) => {
+            return {
+              day,
+              count:
+                revenue.find((r) => r.date.toISOString().split("T")[0] === day)
+                  ?.count ?? 0,
+            };
+          }),
+        };
+      }
+
+      case ReportDuration.CURRENT_MONTH: {
+        const currentDate = new Date();
+
+        const totalDays = this.getDaysInCurrentMonth();
+
+        const startDate = new Date(currentDate);
+        startDate.setDate(1);
+        startDate.setMonth(currentDate.getMonth());
+        startDate.setFullYear(currentDate.getFullYear());
+
+        const allDays = [];
+        for (let index = 0; index < totalDays; index++) {
+          const date = new Date(startDate);
+          date.setDate(startDate.getDate() + index);
+          allDays.push(date.toISOString().split("T")[0]);
+        }
+
+        const [revenue] = await Promise.all([
+          this.userDataRepository.findRevenueReports(getReportsDto),
+        ]);
+
+        return {
+          revenue: allDays.map((day) => {
+            return {
+              day,
+              count:
+                revenue.find((r) => r.date.toISOString().split("T")[0] === day)
+                  ?.count ?? 0,
+            };
+          }),
+        };
+      }
+
+      case ReportDuration.CURRENT_YEAR: {
+        const totalMonths = 12;
+        const allDays = [];
+        for (let index = 1; index <= totalMonths; index++) {
+          allDays.push(index);
+        }
+
+        const [revenue] = await Promise.all([
+          this.userDataRepository.findRevenueReports(getReportsDto),
+        ]);
+
+        return {
+          revenue: allDays.map((day) => {
+            return {
+              month: day,
+              count: revenue.find((r) => r.month === day)?.count ?? 0,
+            };
+          }),
+        };
+      }
+
+      case ReportDuration.CUSTOM: {
+        if (
+          getReportsDto.startDate === undefined ||
+          getReportsDto.endDate === undefined
+        ) {
+          throw new BadRequestException(
+            "start date and end date must be provided",
+          );
+        }
+
+        if (getReportsDto.startDate > getReportsDto.endDate) {
+          throw new BadRequestException(
+            "start date must be less than or equal to end date",
+          );
+        }
+
+        const startDate = new Date(getReportsDto.startDate);
+        const endDate = new Date(getReportsDto.endDate);
+
+        let tempDate = startDate;
+        const allDays = [];
+
+        while (tempDate <= endDate) {
+          allDays.push(tempDate.toISOString().split("T")[0]);
+          tempDate.setDate(startDate.getDate() + 1);
+        }
+
+        const [revenue] = await Promise.all([
+          this.userDataRepository.findRevenueReports(getReportsDto),
+        ]);
+
+        return {
+          revenue: allDays.map((day) => {
+            return {
+              day,
+              count:
+                revenue.find((r) => r.date.toISOString().split("T")[0] === day)
                   ?.count ?? 0,
             };
           }),

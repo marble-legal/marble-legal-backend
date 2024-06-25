@@ -15,14 +15,10 @@ export class UserDataRepository {
         ? `and ("fullName" ILIKE ANY ('{${getUsersDto.searchKeyword
             .split(" ")
             .map((keyword) => '"%' + keyword + '%"')
-            .join(
-              ", ",
-            )}}') or "email" ILIKE ANY ('{${getUsersDto.searchKeyword
+            .join(", ")}}') or "email" ILIKE ANY ('{${getUsersDto.searchKeyword
             .split(" ")
             .map((keyword) => '"%' + keyword + '%"')
-            .join(
-              ", ",
-            )}}'))`
+            .join(", ")}}'))`
         : "";
 
     const results: any[] = await this.dbConnection.query(
@@ -82,6 +78,46 @@ export class UserDataRepository {
       case ReportDuration.CUSTOM: {
         query = `
         SELECT COUNT(*) as count, DATE("createdAt") as date from public."user" where DATE("createdAt") >= DATE('${getReportsDto.startDate}') and DATE("createdAt") <= DATE('${getReportsDto.endDate}') and "userType" = '${type}' group by date;
+        `;
+        break;
+      }
+    }
+    const results = await this.dbConnection.query(query);
+    return results.map((result) => {
+      return {
+        ...result,
+        count: Number.parseInt(result.count),
+      };
+    });
+  }
+
+  async findRevenueReports(getReportsDto: GetReportsDto) {
+    let query = "";
+    switch (getReportsDto.duration) {
+      case ReportDuration.CURRENT_WEEK: {
+        query = `
+        SELECT SUM(amount) as count, DATE("createdAt") as date from public."user_payment" where DATE_PART('week', "createdAt") = DATE_PART('week', NOW()) group by date;
+        `;
+        break;
+      }
+
+      case ReportDuration.CURRENT_MONTH: {
+        query = `
+        SELECT SUM(amount) as count, DATE("createdAt") as date from public."user_payment" where DATE_PART('month', "createdAt") = DATE_PART('month', NOW()) group by date;
+        `;
+        break;
+      }
+
+      case ReportDuration.CURRENT_YEAR: {
+        query = `
+        SELECT SUM(amount) as count, DATE_PART('month', "createdAt") as month from public."user_payment" where DATE_PART('year', "createdAt") = DATE_PART('year', NOW()) group by month;
+        `;
+        break;
+      }
+
+      case ReportDuration.CUSTOM: {
+        query = `
+        SELECT SUM(amount) as count, DATE("createdAt") as date from public."user_payment" where DATE("createdAt") >= DATE('${getReportsDto.startDate}') and DATE("createdAt") <= DATE('${getReportsDto.endDate}') group by date;
         `;
         break;
       }

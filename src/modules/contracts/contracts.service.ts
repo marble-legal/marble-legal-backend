@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { UpdateContractDto } from "./dto/update-contract.dto";
 import { Contract } from "./entities/contract.entity";
@@ -31,12 +35,17 @@ export class ContractsService {
   ) {}
 
   async create(createContractDto: CreateContractDto, userId: string) {
-    const canUseFeature = await this.subscriptionService.canUseFeature(Feature.ContractDrafting, userId)
-    
+    const canUseFeature = await this.subscriptionService.canUseFeature(
+      Feature.ContractDrafting,
+      userId,
+    );
+
     if (!canUseFeature) {
-      throw new ForbiddenException(`You don't have credit balance to use this feature.`)
+      throw new ForbiddenException(
+        `You don't have credit balance to use this feature.`,
+      );
     }
-    
+
     // const prompt = `${createContractDto.content}. Response must be in json format. Example: {"title":"", "summary": "", "content":"<h1>agreemtn</h1>"}`;
     // const response = await this.openAIService.suggestMessage(
     //   prompt,
@@ -88,7 +97,10 @@ export class ContractsService {
           pdfUrl: url.Location,
         },
       ),
-      this.subscriptionService.deductCreditOnUsingFeature(Feature.ContractDrafting, userId)
+      this.subscriptionService.deductCreditOnUsingFeature(
+        Feature.ContractDrafting,
+        userId,
+      ),
     ]);
 
     return {
@@ -145,7 +157,7 @@ export class ContractsService {
       isActive: true,
       userId: userId,
       isGenerated: isGenerated,
-    })
+    });
   }
 
   async update(
@@ -198,10 +210,15 @@ export class ContractsService {
     createContractConversationDto: CreateContractConversationDto,
     userId: string,
   ) {
-    const canUseFeature = await this.subscriptionService.canUseFeature(Feature.ContractAnalysis, userId)
-    
+    const canUseFeature = await this.subscriptionService.canUseFeature(
+      Feature.ContractAnalysis,
+      userId,
+    );
+
     if (!canUseFeature) {
-      throw new ForbiddenException(`You don't have credit balance to use this feature.`)
+      throw new ForbiddenException(
+        `You don't have credit balance to use this feature.`,
+      );
     }
 
     const previousConversations = await this.conversationsRepository.find({
@@ -249,7 +266,10 @@ export class ContractsService {
       contractId: id,
     });
 
-    await this.subscriptionService.deductCreditOnUsingFeature(Feature.ContractAnalysis, userId)
+    await this.subscriptionService.deductCreditOnUsingFeature(
+      Feature.ContractAnalysis,
+      userId,
+    );
 
     return {
       message: message,

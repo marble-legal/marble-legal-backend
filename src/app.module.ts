@@ -15,6 +15,7 @@ import { BusinessEntityModule } from "./modules/business-entity/business-entity.
 import { BusinessEntity } from "./modules/business-entity/entities/business-entity.entity";
 import { UserCustomPlan } from "./modules/users/entities/user-custom-plan.entity";
 import { SubscriptionModule } from "./modules/subscription/subscription.module";
+import { UserPayment } from "./modules/users/entities/user-payment.entity";
 
 const dbEntities = [
   User,
@@ -23,6 +24,7 @@ const dbEntities = [
   Contract,
   BusinessEntity,
   UserCustomPlan,
+  UserPayment,
 ];
 
 @Module({

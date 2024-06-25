@@ -9,7 +9,10 @@ import { Conversation } from "../conversations/entities/conversation.entity";
 import { SubscriptionModule } from "../subscription/subscription.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Contract, Conversation]), SubscriptionModule],
+  imports: [
+    TypeOrmModule.forFeature([Contract, Conversation]),
+    SubscriptionModule,
+  ],
   controllers: [ContractsController],
   providers: [ContractsService, OpenAIService, FileUploaderService],
   exports: [ContractsService],

@@ -15,6 +15,7 @@ import { Tier, PlanType, User } from "../users/entities/user.entity";
 import { GetStripeCheckoutUrlDto } from "../users/dto/get-stripe-checkout-url.dto";
 import { GetStripeCustomerPortalUrlDto } from "../users/dto/get-stripe-customer-portal-url.dto";
 import { UpdateSubscriptionDto } from "../users/dto/update-subscription.dto";
+import { UserPayment } from "../users/entities/user-payment.entity";
 
 @Injectable()
 export class SubscriptionService {
@@ -25,6 +26,8 @@ export class SubscriptionService {
     private userSubscriptionsRepository: Repository<UserSubscription>,
     @InjectRepository(UserCustomPlan)
     private userCustomPlansRepository: Repository<UserCustomPlan>,
+    @InjectRepository(UserPayment)
+    private userPaymentsRepository: Repository<UserPayment>,
     private readonly stripeService: StripeService,
   ) {}
 
@@ -258,7 +261,7 @@ export class SubscriptionService {
       return false;
     }
 
-    const subscription: any = subscriptions[0]
+    const subscription: any = subscriptions[0];
 
     if (subscription.tier !== Tier.CUSTOMISED) {
       return true;
@@ -275,18 +278,18 @@ export class SubscriptionService {
       return false;
     }
 
-    const credit = Number.parseInt(currentCredit[featureIndex].quantity)
+    const credit = Number.parseInt(currentCredit[featureIndex].quantity);
 
     if (feature === Feature.AIAssistance) {
       const aiAssistantCreditMonths = credit;
-      const validDate = new Date(subscription.createdAt)
-      validDate.setMonth(validDate.getMonth() + aiAssistantCreditMonths)
+      const validDate = new Date(subscription.createdAt);
+      validDate.setMonth(validDate.getMonth() + aiAssistantCreditMonths);
 
       if (validDate >= new Date()) {
         return true;
       }
 
-      return false
+      return false;
     }
 
     if (credit <= 0) {
@@ -300,13 +303,13 @@ export class SubscriptionService {
     const subscriptions = await this.fetchSubscriptions(userId);
 
     if (subscriptions.length === 0) {
-      return
+      return;
     }
 
-    const subscription: any = subscriptions[0]
+    const subscription: any = subscriptions[0];
 
     if (subscription.tier !== Tier.CUSTOMISED) {
-      return
+      return;
     }
 
     const assignedCredit = subscription.assignedCredit;
@@ -320,36 +323,39 @@ export class SubscriptionService {
       return false;
     }
 
-    const credit = Number.parseInt(currentCredit[featureIndex].quantity)
+    const credit = Number.parseInt(currentCredit[featureIndex].quantity);
 
     if (feature === Feature.AIAssistance) {
-      return
+      return;
     }
 
     if (currentCredit[featureIndex].quantity <= 0) {
-      return
+      return;
     }
 
-    await this.userCustomPlansRepository.update({
-      id: subscription.id
-    }, {
-      currentCredit: currentCredit.map(credit => {
-        if (credit.feature === feature) {
+    await this.userCustomPlansRepository.update(
+      {
+        id: subscription.id,
+      },
+      {
+        currentCredit: currentCredit.map((credit) => {
+          if (credit.feature === feature) {
+            return {
+              feature: credit.feature,
+              quantity: `${Number.parseInt(credit.quantity) - 1}`,
+            };
+          }
           return {
             feature: credit.feature,
-            quantity: `${Number.parseInt(credit.quantity) - 1}`
-          }
-        }
-        return {
-          feature: credit.feature,
-          quantity: credit.quantity
-        }
-      })
-    })
+            quantity: credit.quantity,
+          };
+        }),
+      },
+    );
   }
 
   getMonthsDifference(date1: Date, date2: Date) {
-    console.log(date1, date2)
+    console.log(date1, date2);
     return (
       (date2.getFullYear() - date1.getFullYear()) * 12 +
       (date2.getMonth() - date1.getMonth())
@@ -417,6 +423,13 @@ export class SubscriptionService {
                 customerId: data.object.customer,
               },
             ),
+            this.userPaymentsRepository.insert({
+              userId: data.object.client_reference_id,
+              amount: data.object.amount_subtotal / 100,
+              currency: data.object.currency,
+              customerEmail: data.object.customer_email,
+              customerId: data.object.customer,
+            }),
           ]);
           return;
         }
@@ -445,6 +458,7 @@ export class SubscriptionService {
               amount: data.object.amount_subtotal / 100,
               currency: data.object.currency,
               customerId: data.object.customer,
+              customerEmail: data.object.customer_email,
             },
           ),
           this.usersRepository.update(
@@ -526,6 +540,27 @@ export class SubscriptionService {
         }
 
         break;
+      }
+
+      case "invoice.payment_succeeded": {
+        const customerEmail = event.data.object.customer_email;
+
+        const user = await this.usersRepository.findOneBy({
+          email: customerEmail,
+        });
+
+        if (!user) {
+          return;
+        }
+
+        await this.userPaymentsRepository.insert({
+          userId: user.id,
+          amount: event.data.object.amount_paid / 100,
+          currency: event.data.object.currency,
+          customerEmail: event.data.object.customer_email,
+          customerId: event.data.object.customer,
+          subscriptionId: event.data.object.subscription,
+        });
       }
     }
   }

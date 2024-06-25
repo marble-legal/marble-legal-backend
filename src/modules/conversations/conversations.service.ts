@@ -17,10 +17,15 @@ export class ConversationsService {
   ) {}
 
   async create(createConversationDto: CreateConversationDto, userId: string) {
-    const canUseFeature = await this.subscriptionService.canUseFeature(Feature.AIAssistance, userId)
-    
+    const canUseFeature = await this.subscriptionService.canUseFeature(
+      Feature.AIAssistance,
+      userId,
+    );
+
     if (!canUseFeature) {
-      throw new ForbiddenException(`You don't have credit balance to use this feature.`)
+      throw new ForbiddenException(
+        `You don't have credit balance to use this feature.`,
+      );
     }
 
     const previousConversations = await this.conversationsRepository.find({
@@ -81,7 +86,10 @@ export class ConversationsService {
       sourceDocuments: sourceDocuments,
     });
 
-    await this.subscriptionService.deductCreditOnUsingFeature(Feature.AIAssistance, userId)
+    await this.subscriptionService.deductCreditOnUsingFeature(
+      Feature.AIAssistance,
+      userId,
+    );
 
     return {
       message: message,

@@ -1,5 +1,6 @@
 export enum ReportsType {
   USERS_COUNT = "USERS_COUNT",
+  REVENUE = "REVENUE",
 }
 
 export enum ReportDuration {

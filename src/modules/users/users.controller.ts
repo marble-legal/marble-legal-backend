@@ -185,7 +185,7 @@ export class UsersController {
   @ApiBearerAuth()
   @Get(":id/dashboard")
   fetchDashboard(@Param("id") id: string, @Request() req) {
-    return this.userService.fetchDashboard(id, req.user.type);
+    return this.userService.fetchDashboard(id, req.user?.type);
   }
 
   @UseGuards(JwtAuthGuard)

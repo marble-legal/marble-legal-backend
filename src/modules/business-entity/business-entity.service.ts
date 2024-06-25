@@ -17,12 +17,17 @@ export class BusinessEntityService {
     private readonly subscriptionService: SubscriptionService,
     private readonly businessEntityDataRepository: BusinessEntityDataRepository,
   ) {}
-  
+
   async create(createBusinessEntityDto: CreateBusinessEntityDto) {
-    const canUseFeature = await this.subscriptionService.canUseFeature(Feature.BusinessEntity, createBusinessEntityDto.userId)
-    
+    const canUseFeature = await this.subscriptionService.canUseFeature(
+      Feature.BusinessEntity,
+      createBusinessEntityDto.userId,
+    );
+
     if (!canUseFeature) {
-      throw new ForbiddenException(`You don't have credit balance to use this feature.`)
+      throw new ForbiddenException(
+        `You don't have credit balance to use this feature.`,
+      );
     }
 
     const [businessEntity] = await Promise.all([
@@ -54,14 +59,19 @@ export class BusinessEntityService {
         powersDetail: createBusinessEntityDto.powersDetail,
         initialOfficers: createBusinessEntityDto.initialOfficers,
       }),
-      this.subscriptionService.deductCreditOnUsingFeature(Feature.BusinessEntity, createBusinessEntityDto.userId)
+      this.subscriptionService.deductCreditOnUsingFeature(
+        Feature.BusinessEntity,
+        createBusinessEntityDto.userId,
+      ),
     ]);
 
-    return businessEntity
+    return businessEntity;
   }
 
   findAll(getBusinessEntitiesDto: GetBusinessEntitiesDto) {
-    return this.businessEntityDataRepository.findEntities(getBusinessEntitiesDto);
+    return this.businessEntityDataRepository.findEntities(
+      getBusinessEntitiesDto,
+    );
   }
 
   findOne(id: string) {

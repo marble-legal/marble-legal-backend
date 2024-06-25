@@ -12,10 +12,11 @@ import { ContractsService } from "../contracts/contracts.service";
 import { ContractsModule } from "../contracts/contracts.module";
 import { UserCustomPlan } from "./entities/user-custom-plan.entity";
 import { SubscriptionModule } from "../subscription/subscription.module";
+import { UserPayment } from "./entities/user-payment.entity";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserPayment]),
     ContractsModule,
     SubscriptionModule,
   ],

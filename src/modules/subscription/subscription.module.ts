@@ -5,9 +5,17 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { UserCustomPlan } from "../users/entities/user-custom-plan.entity";
 import { User } from "../users/entities/user.entity";
 import { StripeService } from "src/shared/providers/stripe.service";
+import { UserPayment } from "../users/entities/user-payment.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserSubscription, UserCustomPlan])],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      UserSubscription,
+      UserCustomPlan,
+      UserPayment,
+    ]),
+  ],
   providers: [SubscriptionService, StripeService],
   exports: [SubscriptionService],
 })
