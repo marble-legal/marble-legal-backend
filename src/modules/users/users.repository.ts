@@ -12,7 +12,17 @@ export class UserDataRepository {
     const searchQuery =
       getUsersDto.searchKeyword !== undefined &&
       getUsersDto.searchKeyword !== ""
-        ? `and ("fullName" ILIKE '%${getUsersDto.searchKeyword}%' or "email" ILIKE '%${getUsersDto.searchKeyword}%')`
+        ? `and ("fullName" ILIKE ANY ('{${getUsersDto.searchKeyword
+            .split(" ")
+            .map((keyword) => '"%' + keyword + '%"')
+            .join(
+              ", ",
+            )}}') or "email" ILIKE ANY ('{${getUsersDto.searchKeyword
+            .split(" ")
+            .map((keyword) => '"%' + keyword + '%"')
+            .join(
+              ", ",
+            )}}'))`
         : "";
 
     const results: any[] = await this.dbConnection.query(

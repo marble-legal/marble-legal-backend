@@ -7,6 +7,7 @@ import { Repository } from "typeorm";
 import { SubscriptionService } from "../subscription/subscription.service";
 import { Feature } from "../users/entities/user-custom-plan.entity";
 import { GetBusinessEntitiesDto } from "./dto/get-business-entities.dto";
+import { BusinessEntityDataRepository } from "./business-entity.repository";
 
 @Injectable()
 export class BusinessEntityService {
@@ -14,6 +15,7 @@ export class BusinessEntityService {
     @InjectRepository(BusinessEntity)
     private businessEnitiesRepository: Repository<BusinessEntity>,
     private readonly subscriptionService: SubscriptionService,
+    private readonly businessEntityDataRepository: BusinessEntityDataRepository,
   ) {}
   
   async create(createBusinessEntityDto: CreateBusinessEntityDto) {
@@ -59,16 +61,7 @@ export class BusinessEntityService {
   }
 
   findAll(getBusinessEntitiesDto: GetBusinessEntitiesDto) {
-    const params = { isActive: true };
-    if (getBusinessEntitiesDto.userId) {
-      params["userId"] = getBusinessEntitiesDto.userId;
-    }
-    return this.businessEnitiesRepository.find({
-      where: params,
-      take: getBusinessEntitiesDto.limit,
-      skip: getBusinessEntitiesDto.page * getBusinessEntitiesDto.limit,
-      order: { createdAt: "DESC" },
-    });
+    return this.businessEntityDataRepository.findEntities(getBusinessEntitiesDto);
   }
 
   findOne(id: string) {
