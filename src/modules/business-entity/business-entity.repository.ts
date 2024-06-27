@@ -61,48 +61,10 @@ export class BusinessEntityDataRepository {
     return results.map((entity) => {
       return {
         ...entity,
+        clients: entity.clients ? JSON.parse(entity.clients) : [],
+        owners: entity.owners ? JSON.parse(entity.owners) : [],
         submittedBy: entity.fullName,
       };
     });
   }
-
-  // async findUsersReports(getReportsDto: GetReportsDto, type: UserType) {
-  //   let query = "";
-  //   switch (getReportsDto.duration) {
-  //     case ReportDuration.CURRENT_WEEK: {
-  //       query = `
-  //       SELECT COUNT(*) as count, DATE("createdAt") as date from public."user" where DATE_PART('week', "createdAt") = DATE_PART('week', NOW()) and "userType" = '${type}' group by date;
-  //       `;
-  //       break;
-  //     }
-
-  //     case ReportDuration.CURRENT_MONTH: {
-  //       query = `
-  //       SELECT COUNT(*) as count, DATE("createdAt") as date from public."user" where DATE_PART('month', "createdAt") = DATE_PART('month', NOW()) and "userType" = '${type}' group by date;
-  //       `;
-  //       break;
-  //     }
-
-  //     case ReportDuration.CURRENT_YEAR: {
-  //       query = `
-  //       SELECT COUNT(*) as count, DATE_PART('month', "createdAt") as month from public."user" where DATE_PART('year', "createdAt") = DATE_PART('year', NOW()) and "userType" = '${type}' group by month;
-  //       `;
-  //       break;
-  //     }
-
-  //     case ReportDuration.CUSTOM: {
-  //       query = `
-  //       SELECT COUNT(*) as count, DATE("createdAt") as date from public."user" where DATE("createdAt") >= DATE('${getReportsDto.startDate}') and DATE("createdAt") <= DATE('${getReportsDto.endDate}') and "userType" = '${type}' group by date;
-  //       `;
-  //       break;
-  //     }
-  //   }
-  //   const results = await this.dbConnection.query(query);
-  //   return results.map((result) => {
-  //     return {
-  //       ...result,
-  //       count: Number.parseInt(result.count),
-  //     };
-  //   });
-  // }
 }

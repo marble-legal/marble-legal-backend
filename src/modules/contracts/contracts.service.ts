@@ -210,17 +210,6 @@ export class ContractsService {
     createContractConversationDto: CreateContractConversationDto,
     userId: string,
   ) {
-    const canUseFeature = await this.subscriptionService.canUseFeature(
-      Feature.ContractAnalysis,
-      userId,
-    );
-
-    if (!canUseFeature) {
-      throw new ForbiddenException(
-        `You don't have credit balance to use this feature.`,
-      );
-    }
-
     const previousConversations = await this.conversationsRepository.find({
       where: {
         contractId: id,
@@ -266,17 +255,23 @@ export class ContractsService {
       contractId: id,
     });
 
-    await this.subscriptionService.deductCreditOnUsingFeature(
-      Feature.ContractAnalysis,
-      userId,
-    );
-
     return {
       message: message,
     };
   }
 
   async uploadContract(file: Express.Multer.File, userId: string) {
+    const canUseFeature = await this.subscriptionService.canUseFeature(
+      Feature.ContractAnalysis,
+      userId,
+    );
+
+    if (!canUseFeature) {
+      throw new ForbiddenException(
+        `You don't have credit balance to use this feature.`,
+      );
+    }
+
     const buff = file.buffer;
     const filePath = `/tmp/${file.originalname}`;
     fs.writeFileSync(filePath, buff);
@@ -297,14 +292,20 @@ export class ContractsService {
       this.openAIService.storeDocumentInRagLayer(filePath, contractObj.id),
     ]);
 
-    await this.contractsRepository.update(
-      {
-        id: contractObj.id,
-      },
-      {
-        pdfUrl: s3Response.Location,
-      },
-    );
+    await Promise.all([
+      this.contractsRepository.update(
+        {
+          id: contractObj.id,
+        },
+        {
+          pdfUrl: s3Response.Location,
+        },
+      ),
+      this.subscriptionService.deductCreditOnUsingFeature(
+        Feature.ContractAnalysis,
+        userId,
+      ),
+    ]);
 
     return {
       message: "Contract uploaded successfully",
