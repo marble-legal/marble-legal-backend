@@ -222,6 +222,9 @@ export class SubscriptionService {
           subscriptionId: subscriptionId,
         },
         {
+    
+  
+    
           subscriptionItemId: subscriptionItemId,
         },
       );
@@ -561,6 +564,42 @@ export class SubscriptionService {
           customerId: event.data.object.customer,
           subscriptionId: event.data.object.subscription,
         });
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const data = event.data;
+
+        const subscriptionStatus =
+          data.object.cancel_at === null && data.object.canceled_at === null
+            ? UserSubscriptionStatus.Paid
+            : UserSubscriptionStatus.Cancelled;
+        let cancelledAt = undefined;
+        if (data.object.cancel_at) {
+          cancelledAt = new Date(0);
+          cancelledAt.setUTCSeconds(data.object.cancel_at);
+        } else if (data.object.canceled_at) {
+          cancelledAt = new Date(0);
+          cancelledAt.setUTCSeconds(data.object.canceled_at);
+        }
+        
+        try {
+          await Promise.all([
+            this.userSubscriptionsRepository.update(
+              {
+                subscriptionId: data.object.id,
+              },
+              {
+                status: subscriptionStatus,
+                cancelledAt: cancelledAt,
+              },
+            ),
+          ]);
+        } catch (err) {
+          console.error("handle stripe webhook", err);
+        }
+
+        break;
       }
     }
   }
