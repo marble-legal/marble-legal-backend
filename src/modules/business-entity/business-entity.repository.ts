@@ -63,6 +63,7 @@ export class BusinessEntityDataRepository {
         ...entity,
         clients: entity.clients ? JSON.parse(entity.clients) : [],
         owners: entity.owners ? JSON.parse(entity.owners) : [],
+        issues: entity.issues ? JSON.parse(entity.issues) : [],
         submittedBy: entity.fullName,
       };
     });
