@@ -74,4 +74,7 @@ export class User extends Base {
 
   @Column({ default: false })
   isEmailNotificationOn?: boolean;
+
+  @Column("simple-json", { nullable: true })
+  currentCredit?: any;
 }

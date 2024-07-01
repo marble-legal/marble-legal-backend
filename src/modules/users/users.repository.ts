@@ -31,13 +31,9 @@ export class UserDataRepository {
         `DATE("createdAt") >= DATE('${getUsersDto.startDate}') and DATE("createdAt") <= DATE('${getUsersDto.endDate}')`,
       );
     } else if (getUsersDto.startDate !== undefined) {
-      filters.push(
-        `DATE("createdAt") >= DATE('${getUsersDto.startDate}')`,
-      );
+      filters.push(`DATE("createdAt") >= DATE('${getUsersDto.startDate}')`);
     } else if (getUsersDto.endDate !== undefined) {
-      filters.push(
-        `DATE("createdAt") <= DATE('${getUsersDto.endDate}')`,
-      );
+      filters.push(`DATE("createdAt") <= DATE('${getUsersDto.endDate}')`);
     }
 
     if (getUsersDto.tiers !== undefined) {

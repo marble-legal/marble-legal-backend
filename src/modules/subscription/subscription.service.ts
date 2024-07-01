@@ -57,24 +57,30 @@ export class SubscriptionService {
       return fixedPlans;
     }
 
-    const customPlans = await this.userCustomPlansRepository.find({
-      where: [
-        {
-          userId: id,
-          status: UserCustomPlanStatus.Paid,
+    const [customPlans, user] = await Promise.all([
+      this.userCustomPlansRepository.find({
+        where: [
+          {
+            userId: id,
+            status: UserCustomPlanStatus.Paid,
+          },
+        ],
+        order: {
+          createdAt: "DESC",
         },
-      ],
-      order: {
-        createdAt: "DESC",
-      },
-      take: 1,
-    });
+        take: 1,
+      }),
+      this.usersRepository.findOneBy({
+        id: id,
+      }),
+    ]);
 
     return customPlans.map((plan) => {
       return {
         ...plan,
         tier: Tier.CUSTOMISED,
         planType: PlanType.MONTHLY,
+        currentCredit: user.currentCredit,
       };
     });
   }
@@ -86,6 +92,7 @@ export class SubscriptionService {
   ) {
     if (getStripeConnectUrlDto.tier === Tier.CUSTOMISED) {
       const products = [];
+      const currentDate = new Date();
       if (
         getStripeConnectUrlDto.aiAssistant &&
         getStripeConnectUrlDto.aiAssistant > 0
@@ -93,6 +100,7 @@ export class SubscriptionService {
         products.push({
           feature: Feature.AIAssistance,
           quantity: getStripeConnectUrlDto.aiAssistant,
+          date: currentDate,
         });
       }
       if (
@@ -102,6 +110,7 @@ export class SubscriptionService {
         products.push({
           feature: Feature.ContractAnalysis,
           quantity: getStripeConnectUrlDto.contractAnalysis,
+          date: currentDate,
         });
       }
       if (
@@ -111,6 +120,7 @@ export class SubscriptionService {
         products.push({
           feature: Feature.ContractDrafting,
           quantity: getStripeConnectUrlDto.contractDrafting,
+          date: currentDate,
         });
       }
       if (
@@ -120,6 +130,7 @@ export class SubscriptionService {
         products.push({
           feature: Feature.BusinessEntity,
           quantity: getStripeConnectUrlDto.businessEntity,
+          date: currentDate,
         });
       }
       if (
@@ -129,6 +140,7 @@ export class SubscriptionService {
         products.push({
           feature: Feature.AttorneyReview,
           quantity: getStripeConnectUrlDto.attorneyReview,
+          date: currentDate,
         });
       }
       const session = await this.stripeService.fetchOneTimeCheckoutUrl(
@@ -333,9 +345,9 @@ export class SubscriptionService {
       return;
     }
 
-    await this.userCustomPlansRepository.update(
+    await this.usersRepository.update(
       {
-        id: subscription.id,
+        id: userId,
       },
       {
         currentCredit: currentCredit.map((credit) => {
@@ -388,6 +400,50 @@ export class SubscriptionService {
           data.object.subscription === undefined
         ) {
           // customised plan payment
+
+          const [user, customPlan] = await Promise.all([
+            this.usersRepository.findOneBy({
+              id: data.object.client_reference_id,
+            }),
+            this.userCustomPlansRepository.findOneBy({
+              checkoutSessionId: data.object.id,
+              userId: data.object.client_reference_id,
+            }),
+          ]);
+
+          const currentCredit = user.currentCredit ?? [];
+          const assignedCredit = customPlan.assignedCredit;
+
+          const currentDate = new Date();
+
+          assignedCredit.forEach((credit) => {
+            const creditIndex = currentCredit.findIndex(
+              (currentCredit) => currentCredit.feature === credit.feature,
+            );
+
+            if (creditIndex === -1) {
+              currentCredit.push(credit);
+            } else {
+              currentCredit[creditIndex].quantity = `${
+                Number.parseInt(currentCredit[creditIndex].quantity) +
+                Number.parseInt(credit.quantity)
+              }`;
+
+              if (currentCredit[creditIndex].feature === Feature.AIAssistance) {
+                const creditDate = new Date(currentCredit[creditIndex].date);
+                creditDate.setMonth(
+                  creditDate.getMonth() + Number.parseInt(credit.quantity),
+                );
+                currentCredit[creditIndex].date =
+                  currentDate > creditDate
+                    ? currentDate
+                    : new Date(currentCredit[creditIndex].date);
+              } else {
+                currentCredit[creditIndex].date = currentDate;
+              }
+            }
+          });
+
           const paymentStatus =
             data.object.payment_status === "paid"
               ? UserCustomPlanStatus.Paid
@@ -409,6 +465,7 @@ export class SubscriptionService {
                 tier: Tier.CUSTOMISED,
                 stripeCustomerId: data.object.customer,
                 planType: PlanType.MONTHLY,
+                currentCredit: currentCredit,
               },
             ),
             this.userCustomPlansRepository.update(
@@ -511,14 +568,12 @@ export class SubscriptionService {
           planType = PlanType.YEARLY;
         }
 
-        const subscription = await this.userSubscriptionsRepository.findOneBy(
-          {
-            subscriptionId: data.object.id,
-          },
-        );
+        const subscription = await this.userSubscriptionsRepository.findOneBy({
+          subscriptionId: data.object.id,
+        });
 
         if (!subscription) {
-          return
+          return;
         }
 
         try {
@@ -590,14 +645,12 @@ export class SubscriptionService {
           planType = PlanType.YEARLY;
         }
 
-        const subscription = await this.userSubscriptionsRepository.findOneBy(
-          {
-            subscriptionId: data.object.id,
-          },
-        );
+        const subscription = await this.userSubscriptionsRepository.findOneBy({
+          subscriptionId: data.object.id,
+        });
 
         if (!subscription) {
-          return
+          return;
         }
 
         try {
