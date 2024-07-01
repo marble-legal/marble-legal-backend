@@ -222,9 +222,6 @@ export class SubscriptionService {
           subscriptionId: subscriptionId,
         },
         {
-    
-  
-    
           subscriptionItemId: subscriptionItemId,
         },
       );
@@ -582,7 +579,7 @@ export class SubscriptionService {
           cancelledAt = new Date(0);
           cancelledAt.setUTCSeconds(data.object.canceled_at);
         }
-        
+
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(

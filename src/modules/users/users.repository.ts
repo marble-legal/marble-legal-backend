@@ -21,12 +21,39 @@ export class UserDataRepository {
             .join(", ")}}'))`
         : "";
 
+    const filters = [];
+
+    if (
+      getUsersDto.startDate !== undefined &&
+      getUsersDto.endDate !== undefined
+    ) {
+      filters.push(
+        `DATE("createdAt") >= DATE('${getUsersDto.startDate}') and DATE("createdAt") <= DATE('${getUsersDto.endDate}')`,
+      );
+    } else if (getUsersDto.startDate !== undefined) {
+      filters.push(
+        `DATE("createdAt") >= DATE('${getUsersDto.startDate}')`,
+      );
+    } else if (getUsersDto.endDate !== undefined) {
+      filters.push(
+        `DATE("createdAt") <= DATE('${getUsersDto.endDate}')`,
+      );
+    }
+
+    if (getUsersDto.tiers !== undefined) {
+      const tier = getUsersDto.tiers.map((tier) => `'${tier}'`).join(",");
+      filters.push(`"tier" = ANY(ARRAY[${[tier]}])`);
+    }
+
+    const filtersQuery =
+      filters.length > 0 ? `and ${filters.join(" and ")}` : "";
+
     const results: any[] = await this.dbConnection.query(
       `
       select * from public."user"
       where "isActive" = ${getUsersDto.showActive} and "userType" = '${
         getUsersDto.type
-      }' ${searchQuery} 
+      }' ${searchQuery} ${filtersQuery}
       order by "createdAt" desc
       LIMIT ${getUsersDto.limit}
       OFFSET ${getUsersDto.limit * getUsersDto.page}

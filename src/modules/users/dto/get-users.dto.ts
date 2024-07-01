@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { UserType } from "../entities/user.entity";
+import { Tier, UserType } from "../entities/user.entity";
 
 export class GetUsersDto {
   page?: number = 0;
@@ -11,4 +11,10 @@ export class GetUsersDto {
 
   @Transform(({ value }) => String(value) === "true")
   showActive?: boolean = true;
+
+  startDate?: Date;
+  endDate?: Date;
+
+  @Transform(({ value }) => value.split(",").map((tier) => tier.trim()))
+  tiers?: Tier[];
 }

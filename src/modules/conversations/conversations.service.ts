@@ -59,7 +59,7 @@ export class ConversationsService {
             .filter((conv) => conv.isUserMessage)
             .map((conv) => conv.message),
           Assistant: latestConversations
-              .filter((conv) => !conv.isUserMessage)
+            .filter((conv) => !conv.isUserMessage)
             .map((conv) => conv.message),
         },
       },
