@@ -437,9 +437,6 @@ export class UsersService {
     const params = {
       isActive: updateUserStatusDto.isActive,
     };
-    if (updateUserStatusDto.isActive) {
-      params["isPending"] = false;
-    }
 
     await this.usersRepository.update(
       {
