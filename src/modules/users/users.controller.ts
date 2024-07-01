@@ -44,8 +44,8 @@ export class UsersController {
     private readonly subscriptionService: SubscriptionService,
   ) {}
 
-  // @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Get()
   findAll(@Query() getUsersDto: GetUsersDto) {
     return this.userService.findAll(getUsersDto);
