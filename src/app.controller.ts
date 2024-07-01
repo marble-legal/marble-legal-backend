@@ -24,6 +24,10 @@ export class AppController {
 
   @Post("/stripe-webhook")
   handleStripeWebhook(@Request() req) {
-    this.subscriptionService.handleStripeWebhook(req.body);
+    this.subscriptionService.handleStripeWebhook(
+      req.body,
+      req.rawBody,
+      req.headers["stripe-signature"],
+    );
   }
 }

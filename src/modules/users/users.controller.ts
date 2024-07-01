@@ -47,21 +47,40 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get()
-  findAll(@Query() getUsersDto: GetUsersDto) {
+  findAll(@Query() getUsersDto: GetUsersDto, @Request() req) {
+    if (req.user.type != UserType.Admin) {
+      throw new UnauthorizedException(
+        `You don't have permission to perform this operation.`,
+      );
+    }
     return this.userService.findAll(getUsersDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get(":id")
-  findOne(@Param("id") id: string) {
+  findOne(@Param("id") id: string, @Request() req) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.userService.findOne(id, true);
   }
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Put(":id")
-  update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param("id") id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Request() req,
+  ) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.userService.update(id, updateUserDto);
   }
 
@@ -71,7 +90,13 @@ export class UsersController {
   updatePassword(
     @Param("id") id: string,
     @Body() updateUserDto: UpdateUserPasswordDto,
+    @Request() req,
   ) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.userService.updatePassword(id, updateUserDto);
   }
 
@@ -129,7 +154,7 @@ export class UsersController {
   ) {
     if (req.user.type !== UserType.Admin && req.user.id !== id) {
       throw new UnauthorizedException(
-        "You are not authorized to delete other user account",
+        "You don't have permission to perform this operation.",
       );
     }
     return this.userService.remove(id, deleteUserDto, req.user.type);
@@ -207,6 +232,11 @@ export class UsersController {
     @Request() req,
     @Query() getStripeCheckoutUrlDto: GetStripeCheckoutUrlDto,
   ) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.subscriptionService.fetchStripeCheckoutUrl(
       id,
       req.user,
@@ -222,6 +252,11 @@ export class UsersController {
     @Request() req,
     @Query() getStripeCustomerPortalUrlDto: GetStripeCustomerPortalUrlDto,
   ) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.subscriptionService.fetchStripeCustomerPortalUrl(
       id,
       getStripeCustomerPortalUrlDto,
@@ -231,7 +266,12 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get(":id/subscriptions")
-  fetchSubscriptions(@Param("id") id: string) {
+  fetchSubscriptions(@Param("id") id: string, @Request() req) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.subscriptionService.fetchSubscriptions(id);
   }
 
@@ -241,7 +281,13 @@ export class UsersController {
   cancelSubscription(
     @Param("id") id: string,
     @Param("subscriptionId") subscriptionId: string,
+    @Request() req,
   ) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.subscriptionService.cancelSubscription(subscriptionId, id);
   }
 
@@ -252,7 +298,13 @@ export class UsersController {
     @Param("id") id: string,
     @Param("subscriptionId") subscriptionId: string,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
+    @Request() req,
   ) {
+    if (req.user.type !== UserType.Admin && req.user.id !== id) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.subscriptionService.updateSubscription(
       subscriptionId,
       id,

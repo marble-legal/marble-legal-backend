@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Query,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { ConversationsService } from "./conversations.service";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
@@ -16,6 +17,7 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/shared/providers/jwt.auth.guard";
 import { GetConversationsDto } from "./dto/get-conversations.dto";
 import { UpdateConversationDto } from "./dto/update-conversation.dto";
+import { UserType } from "../users/entities/user.entity";
 
 @ApiTags("Conversations Management")
 @Controller("conversations")
@@ -32,7 +34,15 @@ export class ConversationsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get()
-  findAll(@Query() getConversationsDto: GetConversationsDto) {
+  findAll(@Query() getConversationsDto: GetConversationsDto, @Request() req) {
+    if (
+      req.user.type !== UserType.Admin &&
+      req.user.id !== getConversationsDto.userId
+    ) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.conversationsService.findAll(
       getConversationsDto.userId,
       getConversationsDto.contractId,

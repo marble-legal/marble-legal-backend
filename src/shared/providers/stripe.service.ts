@@ -151,4 +151,14 @@ export class StripeService {
       }
     }
   }
+
+  verifyWebhookSignature(payload: any, signature: string) {
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const event = stripe.webhooks.constructEvent(
+      payload,
+      signature,
+      process.env.STRIPE_WEBHOOK_SIGN_SECRET,
+    );
+    return event;
+  }
 }

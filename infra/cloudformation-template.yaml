@@ -75,6 +75,9 @@ Parameters:
   STRIPEATTORNEYREVIEWPRICEID:
     Type: String
     Description: Price ID for Attorney Review
+  STRIPEWEBHOOKSIGNSECRET:
+    Type: String
+    Description: Stripe Webhook Signing Secret
   
 
 Resources:
@@ -184,6 +187,8 @@ Resources:
               Value: !Ref STRIPEBUSINESSENTITYPRICEID
             - Name: STRIPE_ATTORNEY_REVIEW_PRICE_ID
               Value: !Ref STRIPEATTORNEYREVIEWPRICEID
+            - Name: STRIPE_WEBHOOK_SIGN_SECRET
+              Value: !Ref STRIPEWEBHOOKSIGNSECRET
           LogConfiguration:
             LogDriver: awslogs
             Options:

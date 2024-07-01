@@ -390,7 +390,14 @@ export class SubscriptionService {
     return subscriptions + customPlans;
   }
 
-  async handleStripeWebhook(event: any) {
+  async handleStripeWebhook(event: any, rawBody: any, signatureHeader: any) {
+    try {
+      this.stripeService.verifyWebhookSignature(rawBody, signatureHeader);
+    } catch (err) {
+      console.error("handle stripe webhook", err);
+      throw err;
+    }
+
     switch (event.type) {
       case "checkout.session.completed": {
         const data = event.data;

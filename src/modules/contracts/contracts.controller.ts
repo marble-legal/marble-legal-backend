@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { ContractsService } from "./contracts.service";
 import { CreateContractDto } from "./dto/create-contract.dto";
@@ -21,6 +22,7 @@ import { JwtAuthGuard } from "src/shared/providers/jwt.auth.guard";
 import { GetContractsDto } from "./dto/get-contracts.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CreateContractConversationDto } from "./dto/create-contract-conversation.dto";
+import { UserType } from "../users/entities/user.entity";
 
 @ApiTags("Contracts Management")
 @Controller("contracts")
@@ -37,7 +39,15 @@ export class ContractsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get()
-  findAll(@Query() getContractsDto: GetContractsDto) {
+  findAll(@Query() getContractsDto: GetContractsDto, @Request() req) {
+    if (
+      req.user.type !== UserType.Admin &&
+      req.user.id !== getContractsDto.userId
+    ) {
+      throw new UnauthorizedException(
+        "You don't have permission to perform this operation.",
+      );
+    }
     return this.contractsService.findAll(getContractsDto);
   }
 
