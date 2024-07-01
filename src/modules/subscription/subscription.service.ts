@@ -474,6 +474,85 @@ export class SubscriptionService {
         break;
       }
 
+      case "customer.subscription.created": {
+        const data = event.data;
+
+        const subscriptionStatus =
+          data.object.cancel_at === null
+            ? UserSubscriptionStatus.Paid
+            : UserSubscriptionStatus.Cancelled;
+        let cancelledAt = undefined;
+        if (data.object.cancel_at) {
+          cancelledAt = new Date(0);
+          cancelledAt.setUTCSeconds(data.object.cancel_at);
+        }
+
+        const MonthlyPriceTierMap = {
+          [process.env.STRIPE_INDIVIDUAL_MONTHLY_PRICE_ID]: Tier.INDIVIDUAL,
+          [process.env.STRIPE_SMALL_BUSINESS_MONTHLY_PRICE_ID]:
+            Tier.SMALL_BUSINESS,
+          [process.env.STRIPE_SOLO_PRACTIONER_MONTHLY_PRICE_ID]:
+            Tier.SOLO_PRACTITIONER,
+        };
+
+        const YearlyPriceTierMap = {
+          [process.env.STRIPE_INDIVIDUAL_YEARLY_PRICE_ID]: Tier.INDIVIDUAL,
+          [process.env.STRIPE_SMALL_BUSINESS_YEARLY_PRICE_ID]:
+            Tier.SMALL_BUSINESS,
+          [process.env.STRIPE_SOLO_PRACTIONER_YEARLY_PRICE_ID]:
+            Tier.SOLO_PRACTITIONER,
+        };
+
+        const priceId = data.object.plan.id;
+        let tier = MonthlyPriceTierMap[priceId];
+        let planType = PlanType.MONTHLY;
+        if (tier === undefined) {
+          tier = YearlyPriceTierMap[priceId];
+          planType = PlanType.YEARLY;
+        }
+
+        const subscription = await this.userSubscriptionsRepository.findOneBy(
+          {
+            subscriptionId: data.object.id,
+          },
+        );
+
+        if (!subscription) {
+          return
+        }
+
+        try {
+          await Promise.all([
+            this.userSubscriptionsRepository.update(
+              {
+                subscriptionId: subscription.subscriptionId,
+              },
+              {
+                status: subscriptionStatus,
+                amount: data.object.plan.amount / 100,
+                currency: data.object.plan.currency,
+                cancelledAt: cancelledAt,
+                subscriptionItemId: data.object.items.data[0].id,
+                planType: planType,
+                tier: tier,
+              },
+            ),
+            this.usersRepository.update(
+              {
+                id: subscription.userId,
+              },
+              {
+                tier: tier,
+              },
+            ),
+          ]);
+        } catch (err) {
+          console.error("handle stripe webhook", err);
+        }
+
+        break;
+      }
+
       case "customer.subscription.updated": {
         const data = event.data;
 
@@ -510,11 +589,22 @@ export class SubscriptionService {
           tier = YearlyPriceTierMap[priceId];
           planType = PlanType.YEARLY;
         }
+
+        const subscription = await this.userSubscriptionsRepository.findOneBy(
+          {
+            subscriptionId: data.object.id,
+          },
+        );
+
+        if (!subscription) {
+          return
+        }
+
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(
               {
-                subscriptionId: data.object.id,
+                subscriptionId: subscription.subscriptionId,
               },
               {
                 status: subscriptionStatus,
@@ -528,7 +618,7 @@ export class SubscriptionService {
             ),
             this.usersRepository.update(
               {
-                id: data.object.client_reference_id,
+                id: subscription.userId,
               },
               {
                 tier: tier,
