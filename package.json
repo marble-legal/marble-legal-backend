@@ -41,6 +41,7 @@
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
     "html-pdf": "^3.0.1",
+    "html-to-docx": "^1.8.0",
     "mime-types": "^2.1.35",
     "openai": "^4.47.2",
     "order-id": "^2.1.2",

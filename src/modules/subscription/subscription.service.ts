@@ -605,6 +605,7 @@ export class SubscriptionService {
               },
               {
                 tier: tier,
+                planType: planType,
               },
             ),
           ]);
@@ -682,6 +683,7 @@ export class SubscriptionService {
               },
               {
                 tier: tier,
+                planType: planType,
               },
             ),
           ]);

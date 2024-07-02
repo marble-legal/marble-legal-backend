@@ -21,6 +21,9 @@ export class Contract extends Base {
   @Column({ nullable: true })
   pdfUrl?: string;
 
+  @Column({ nullable: true })
+  docUrl?: string;
+
   @Column({ nullable: true, type: "text" })
   content?: string;
 

@@ -21,6 +21,7 @@ const util = require("util");
 const pdf = require("html-pdf");
 const os = require("os");
 const puppeteer = require("puppeteer");
+const HTMLtoDOCX = require("html-to-docx");
 
 @Injectable()
 export class ContractsService {
@@ -80,13 +81,25 @@ export class ContractsService {
       isGenerated: true,
     });
 
-    await this.createPdf(responseData.html);
-    const url = await this.fileUploaderService.uploadContent(
-      "tnc.pdf",
-      `app/users/${userId}/contracts/${contractObj.id}`,
-      `${contractObj.title}.pdf`,
-      "application/pdf",
-    );
+    await Promise.all([
+      this.createDoc(responseData.html),
+      this.createPdf(responseData.html),
+    ]);
+
+    const [pdfUrl, docUrl] = await Promise.all([
+      this.fileUploaderService.uploadContent(
+        "tnc.pdf",
+        `app/users/${userId}/contracts/${contractObj.id}`,
+        `${contractObj.title}.pdf`,
+        "application/pdf",
+      ),
+      this.fileUploaderService.uploadContent(
+        "contract.docx",
+        `app/users/${userId}/contracts/${contractObj.id}`,
+        `${contractObj.title}.docx`,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ),
+    ]);
 
     await Promise.all([
       this.contractsRepository.update(
@@ -94,7 +107,8 @@ export class ContractsService {
           id: contractObj.id,
         },
         {
-          pdfUrl: url.Location,
+          pdfUrl: pdfUrl.Location,
+          docUrl: docUrl.Location,
         },
       ),
       this.subscriptionService.deductCreditOnUsingFeature(
@@ -105,7 +119,8 @@ export class ContractsService {
 
     return {
       ...contractObj,
-      pdfUrl: url.Location,
+      pdfUrl: pdfUrl.Location,
+      docUrl: docUrl.Location,
     };
   }
 
@@ -130,6 +145,20 @@ export class ContractsService {
 
       // Close the browser
       await browser.close();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createDoc(content: string) {
+    try {
+      const fileBuffer = await HTMLtoDOCX(content, null, {
+        table: { row: { cantSplit: true } },
+        footer: true,
+        pageNumber: true,
+      });
+
+      fs.writeFileSync("./contract.docx", fileBuffer);
     } catch (error) {
       throw error;
     }
