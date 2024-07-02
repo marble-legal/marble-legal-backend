@@ -117,6 +117,7 @@ export class UsersService {
         lastActive: user.lastActive,
         totalDrafts: totalDrafts,
         totalAnalysis: totalAnalysis,
+        isActive: user.isActive,
       };
     } catch (err: any) {
       throw err;
