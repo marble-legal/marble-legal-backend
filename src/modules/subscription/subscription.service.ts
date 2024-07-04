@@ -574,11 +574,6 @@ export class SubscriptionService {
           id: subscription.userId,
         });
 
-        const currentCredits = this.provideLatestCredit(
-          tier,
-          user.currentCredit,
-        );
-
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(
@@ -662,12 +657,6 @@ export class SubscriptionService {
           id: subscription.userId,
         });
 
-        let currentCredits = this.provideLatestCredit(tier, user.currentCredit);
-
-        if (tier === user.tier) {
-          currentCredits = user.currentCredit;
-        }
-
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(
@@ -739,7 +728,7 @@ export class SubscriptionService {
 
         const currentCredits = this.provideLatestCredit(
           tier,
-          user.currentCredit,
+          user.currentCredit ?? [],
         );
 
         await Promise.all([
