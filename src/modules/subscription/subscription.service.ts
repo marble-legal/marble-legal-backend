@@ -267,22 +267,28 @@ export class SubscriptionService {
   }
 
   async canUseFeature(feature: Feature, userId: string) {
-    const subscriptions = await this.fetchSubscriptions(userId);
+    const user = await this.usersRepository.findOneBy({
+      id: userId,
+    });
 
-    if (subscriptions.length === 0) {
+    if (!user.isActive || !user.tier) {
       return false;
     }
 
-    const subscription: any = subscriptions[0];
-
-    if (subscription.tier !== Tier.CUSTOMISED) {
+    if (
+      user.tier === Tier.SMALL_BUSINESS &&
+      [
+        Feature.AIAssistance,
+        Feature.ContractAnalysis,
+        Feature.ContractDrafting,
+      ].includes(feature)
+    ) {
       return true;
     }
 
-    const assignedCredit = subscription.assignedCredit;
-    const currentCredit = subscription.currentCredit;
+    const currentCredit = user.currentCredit;
 
-    const featureIndex = assignedCredit.findIndex(
+    const featureIndex = currentCredit.findIndex(
       (credit) => credit.feature === feature,
     );
 
@@ -292,17 +298,17 @@ export class SubscriptionService {
 
     const credit = Number.parseInt(currentCredit[featureIndex].quantity);
 
-    if (feature === Feature.AIAssistance) {
-      const aiAssistantCreditMonths = credit;
-      const validDate = new Date(subscription.createdAt);
-      validDate.setMonth(validDate.getMonth() + aiAssistantCreditMonths);
+    // if (feature === Feature.AIAssistance) {
+    //   const aiAssistantCreditMonths = credit;
+    //   const validDate = new Date(subscription.createdAt);
+    //   validDate.setMonth(validDate.getMonth() + aiAssistantCreditMonths);
 
-      if (validDate >= new Date()) {
-        return true;
-      }
+    //   if (validDate >= new Date()) {
+    //     return true;
+    //   }
 
-      return false;
-    }
+    //   return false;
+    // }
 
     if (credit <= 0) {
       return false;
@@ -312,36 +318,34 @@ export class SubscriptionService {
   }
 
   async deductCreditOnUsingFeature(feature: Feature, userId: string) {
-    const subscriptions = await this.fetchSubscriptions(userId);
+    const user = await this.usersRepository.findOneBy({
+      id: userId,
+    });
 
-    if (subscriptions.length === 0) {
+    if (
+      user.tier === Tier.SMALL_BUSINESS &&
+      [
+        Feature.AIAssistance,
+        Feature.ContractAnalysis,
+        Feature.ContractDrafting,
+      ].includes(feature)
+    ) {
       return;
     }
 
-    const subscription: any = subscriptions[0];
+    const currentCredit = user.currentCredit;
 
-    if (subscription.tier !== Tier.CUSTOMISED) {
-      return;
-    }
-
-    const assignedCredit = subscription.assignedCredit;
-    const currentCredit = subscription.currentCredit;
-
-    const featureIndex = assignedCredit.findIndex(
+    const featureIndex = currentCredit.findIndex(
       (credit) => credit.feature === feature,
     );
 
     if (featureIndex === -1) {
-      return false;
+      return;
     }
 
     const credit = Number.parseInt(currentCredit[featureIndex].quantity);
 
-    if (feature === Feature.AIAssistance) {
-      return;
-    }
-
-    if (currentCredit[featureIndex].quantity <= 0) {
+    if (credit <= 0) {
       return;
     }
 
@@ -367,7 +371,6 @@ export class SubscriptionService {
   }
 
   getMonthsDifference(date1: Date, date2: Date) {
-    console.log(date1, date2);
     return (
       (date2.getFullYear() - date1.getFullYear()) * 12 +
       (date2.getMonth() - date1.getMonth())
@@ -456,22 +459,14 @@ export class SubscriptionService {
               ? UserCustomPlanStatus.Paid
               : UserCustomPlanStatus.Cancelled;
           await Promise.all([
-            this.userSubscriptionsRepository.update(
-              {
-                userId: data.object.client_reference_id,
-              },
-              {
-                isActive: false,
-              },
-            ),
             this.usersRepository.update(
               {
                 id: data.object.client_reference_id,
               },
               {
-                tier: Tier.CUSTOMISED,
+                tier: user.tier ?? Tier.CUSTOMISED,
                 stripeCustomerId: data.object.customer,
-                planType: PlanType.MONTHLY,
+                planType: user.planType ?? PlanType.MONTHLY,
                 currentCredit: currentCredit,
               },
             ),
@@ -503,14 +498,6 @@ export class SubscriptionService {
             ? UserSubscriptionStatus.Paid
             : UserSubscriptionStatus.Cancelled;
         await Promise.all([
-          this.userCustomPlansRepository.update(
-            {
-              userId: data.object.client_reference_id,
-            },
-            {
-              isActive: false,
-            },
-          ),
           this.userSubscriptionsRepository.update(
             {
               checkoutSessionId: data.object.id,
@@ -583,6 +570,15 @@ export class SubscriptionService {
           return;
         }
 
+        const user = await this.usersRepository.findOneBy({
+          id: subscription.userId,
+        });
+
+        const currentCredits = this.provideLatestCredit(
+          tier,
+          user.currentCredit,
+        );
+
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(
@@ -606,6 +602,7 @@ export class SubscriptionService {
               {
                 tier: tier,
                 planType: planType,
+                // currentCredit: currentCredits,
               },
             ),
           ]);
@@ -661,6 +658,16 @@ export class SubscriptionService {
           return;
         }
 
+        const user = await this.usersRepository.findOneBy({
+          id: subscription.userId,
+        });
+
+        let currentCredits = this.provideLatestCredit(tier, user.currentCredit);
+
+        if (tier === user.tier) {
+          currentCredits = user.currentCredit;
+        }
+
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(
@@ -684,6 +691,7 @@ export class SubscriptionService {
               {
                 tier: tier,
                 planType: planType,
+                // currentCredit: currentCredits,
               },
             ),
           ]);
@@ -705,14 +713,53 @@ export class SubscriptionService {
           return;
         }
 
-        await this.userPaymentsRepository.insert({
-          userId: user.id,
-          amount: event.data.object.amount_paid / 100,
-          currency: event.data.object.currency,
-          customerEmail: event.data.object.customer_email,
-          customerId: event.data.object.customer,
-          subscriptionId: event.data.object.subscription,
-        });
+        const MonthlyPriceTierMap = {
+          [process.env.STRIPE_INDIVIDUAL_MONTHLY_PRICE_ID]: Tier.INDIVIDUAL,
+          [process.env.STRIPE_SMALL_BUSINESS_MONTHLY_PRICE_ID]:
+            Tier.SMALL_BUSINESS,
+          [process.env.STRIPE_SOLO_PRACTIONER_MONTHLY_PRICE_ID]:
+            Tier.SOLO_PRACTITIONER,
+        };
+
+        const YearlyPriceTierMap = {
+          [process.env.STRIPE_INDIVIDUAL_YEARLY_PRICE_ID]: Tier.INDIVIDUAL,
+          [process.env.STRIPE_SMALL_BUSINESS_YEARLY_PRICE_ID]:
+            Tier.SMALL_BUSINESS,
+          [process.env.STRIPE_SOLO_PRACTIONER_YEARLY_PRICE_ID]:
+            Tier.SOLO_PRACTITIONER,
+        };
+
+        const priceId = event.data.object.lines.data[0].plan.id;
+        let tier = MonthlyPriceTierMap[priceId];
+        let planType = PlanType.MONTHLY;
+        if (tier === undefined) {
+          tier = YearlyPriceTierMap[priceId];
+          planType = PlanType.YEARLY;
+        }
+
+        const currentCredits = this.provideLatestCredit(
+          tier,
+          user.currentCredit,
+        );
+
+        await Promise.all([
+          this.userPaymentsRepository.insert({
+            userId: user.id,
+            amount: event.data.object.amount_paid / 100,
+            currency: event.data.object.currency,
+            customerEmail: event.data.object.customer_email,
+            customerId: event.data.object.customer,
+            subscriptionId: event.data.object.subscription,
+          }),
+          this.usersRepository.update(
+            {
+              id: user.id,
+            },
+            {
+              currentCredit: currentCredits,
+            },
+          ),
+        ]);
         break;
       }
 
@@ -743,6 +790,15 @@ export class SubscriptionService {
                 cancelledAt: cancelledAt,
               },
             ),
+            this.usersRepository.update(
+              {
+                stripeCustomerId: data.object.customer,
+              },
+              {
+                tier: null,
+                planType: null,
+              },
+            ),
           ]);
         } catch (err) {
           console.error("handle stripe webhook", err);
@@ -751,5 +807,78 @@ export class SubscriptionService {
         break;
       }
     }
+  }
+
+  provideLatestCredit(tier: Tier, currentCredit: any[]) {
+    const creditsPerPlan = {
+      [Tier.INDIVIDUAL]: {
+        [Feature.AIAssistance]: 10,
+        [Feature.ContractAnalysis]: 2,
+        [Feature.ContractDrafting]: 2,
+      },
+    };
+
+    if (tier === Tier.SMALL_BUSINESS) {
+      const arr = [];
+
+      const businessEntityCredit = currentCredit.find(
+        (credit) => credit.feature === Feature.BusinessEntity,
+      );
+      const attorneyReviewCredit = currentCredit.find(
+        (credit) => credit.feature === Feature.AttorneyReview,
+      );
+
+      if (businessEntityCredit) {
+        arr.push(businessEntityCredit);
+      }
+
+      if (attorneyReviewCredit) {
+        arr.push(attorneyReviewCredit);
+      }
+
+      return arr;
+    }
+
+    const assignedCredit = [];
+    const credits = creditsPerPlan[tier];
+    const currentDate = new Date();
+
+    for (const [feature, quantity] of Object.entries(credits)) {
+      assignedCredit.push({
+        feature: feature,
+        quantity: quantity,
+        date: currentDate,
+      });
+    }
+
+    assignedCredit.forEach((credit) => {
+      const creditIndex = currentCredit.findIndex(
+        (currentCredit) => currentCredit.feature === credit.feature,
+      );
+
+      if (creditIndex === -1) {
+        currentCredit.push(credit);
+      } else {
+        currentCredit[creditIndex].quantity = `${
+          Number.parseInt(currentCredit[creditIndex].quantity) +
+          Number.parseInt(credit.quantity)
+        }`;
+
+        if (currentCredit[creditIndex].feature === Feature.AIAssistance) {
+          const creditDate = new Date(currentCredit[creditIndex].date);
+          creditDate.setMonth(
+            creditDate.getMonth() + Number.parseInt(credit.quantity),
+          );
+          currentCredit[creditIndex].date =
+            currentDate > creditDate
+              ? currentDate
+              : new Date(currentCredit[creditIndex].date);
+        } else {
+          currentCredit[creditIndex].date = currentDate;
+        }
+      }
+    });
+
+    return currentCredit;
   }
 }

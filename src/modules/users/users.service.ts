@@ -118,6 +118,7 @@ export class UsersService {
         totalDrafts: totalDrafts,
         totalAnalysis: totalAnalysis,
         isActive: user.isActive,
+        currentCredit: user.currentCredit,
       };
     } catch (err: any) {
       throw err;

@@ -12,7 +12,7 @@ export class UserPayment extends Base {
   @Column({ nullable: true })
   customerId?: string;
 
-  @Column({ type: "decimal", precision: 5, scale: 2 })
+  @Column({ type: "decimal", precision: 7, scale: 2 })
   amount: number;
 
   @Column()

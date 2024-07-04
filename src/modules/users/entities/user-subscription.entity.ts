@@ -37,7 +37,7 @@ export class UserSubscription extends Base {
   @Column()
   planType: PlanType;
 
-  @Column({ nullable: true, type: "decimal", precision: 5, scale: 2 })
+  @Column({ nullable: true, type: "decimal", precision: 7, scale: 2 })
   amount?: number;
 
   @Column({ nullable: true })
