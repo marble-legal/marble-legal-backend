@@ -35,7 +35,7 @@ export class StripeService {
       //   enabled: true,
       // },
       subscription_data: {
-        trial_period_days: 7,
+        trial_period_days: 1,
       },
       // cancel_url: 'https://example.com/canceled.html',
     });
