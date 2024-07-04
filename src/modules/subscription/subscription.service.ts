@@ -286,11 +286,11 @@ export class SubscriptionService {
       return true;
     }
 
-    const currentCredit = user.currentCredit;
+    const currentCredit = user.currentCredit ?? [];
 
-    const featureIndex = currentCredit.findIndex(
+    const featureIndex = currentCredit?.findIndex(
       (credit) => credit.feature === feature,
-    );
+    ) ?? -1;
 
     if (featureIndex === -1) {
       return false;
@@ -333,11 +333,11 @@ export class SubscriptionService {
       return;
     }
 
-    const currentCredit = user.currentCredit;
+    const currentCredit = user.currentCredit ?? [];
 
-    const featureIndex = currentCredit.findIndex(
+    const featureIndex = currentCredit?.findIndex(
       (credit) => credit.feature === feature,
-    );
+    ) ?? -1;
 
     if (featureIndex === -1) {
       return;
@@ -427,9 +427,9 @@ export class SubscriptionService {
           const currentDate = new Date();
 
           assignedCredit.forEach((credit) => {
-            const creditIndex = currentCredit.findIndex(
+            const creditIndex = currentCredit?.findIndex(
               (currentCredit) => currentCredit.feature === credit.feature,
-            );
+            ) ?? -1;
 
             if (creditIndex === -1) {
               currentCredit.push(credit);
@@ -841,9 +841,9 @@ export class SubscriptionService {
     }
 
     assignedCredit.forEach((credit) => {
-      const creditIndex = currentCredit.findIndex(
+      const creditIndex = currentCredit?.findIndex(
         (currentCredit) => currentCredit.feature === credit.feature,
-      );
+      ) ?? -1;
 
       if (creditIndex === -1) {
         currentCredit.push(credit);
