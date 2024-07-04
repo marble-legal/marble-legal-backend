@@ -127,7 +127,6 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | undefined> {
     const user = await this.usersRepository.findOneBy({
       email: email.toLowerCase(),
-      isActive: true,
     });
     return user;
   }
