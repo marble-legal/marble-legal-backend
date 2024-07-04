@@ -15,9 +15,15 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     password: string,
   ): Promise<User | undefined> {
     const user = await this.authService.validateUser(username, password);
+
     if (!user) {
-      throw new UnauthorizedException("User does not exist");
+      throw new UnauthorizedException('The email address or password is incorrect.');
     }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Your account has been blocked. Please contact support for assistance.');
+    }
+
     return user;
   }
 }

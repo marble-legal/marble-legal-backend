@@ -28,9 +28,15 @@ export class AuthService {
         loginDto.password,
         loginDto.googleId,
       );
+
       if (!user || user.userType !== loginDto.userType) {
-        throw new UnauthorizedException();
+        throw new UnauthorizedException('The email address or password is incorrect.');
       }
+
+      if (!user.isActive) {
+        throw new UnauthorizedException('Your account has been blocked. Please contact support for assistance.');
+      }
+
       const payload = { userId: user.id, type: user.userType };
       const accessToken = this.jwtService.sign(payload, { expiresIn: "1d" });
 
