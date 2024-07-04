@@ -17,11 +17,15 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const user = await this.authService.validateUser(username, password);
 
     if (!user) {
-      throw new UnauthorizedException('The email address or password is incorrect.');
+      throw new UnauthorizedException(
+        "The email address or password is incorrect.",
+      );
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Your account has been blocked. Please contact support for assistance.');
+      throw new UnauthorizedException(
+        "Your account has been blocked. Please contact support for assistance.",
+      );
     }
 
     return user;

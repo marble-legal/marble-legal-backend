@@ -63,7 +63,7 @@ export class UsersService {
     params: {
       fullName: string;
       email: string;
-      password: string;
+      password?: string;
       googleId?: string;
     },
     type: UserType = UserType.Admin,
@@ -127,6 +127,14 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | undefined> {
     const user = await this.usersRepository.findOneBy({
       email: email.toLowerCase(),
+    });
+    return user;
+  }
+
+  async findByGoogleId(email: string): Promise<User | undefined> {
+    const user = await this.usersRepository.findOneBy({
+      email: email.toLowerCase(),
+      isActive: true,
     });
     return user;
   }

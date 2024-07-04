@@ -1,5 +1,6 @@
 import { UsersService } from "../users/users.service";
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -27,14 +28,20 @@ export class AuthService {
         loginDto.email,
         loginDto.password,
         loginDto.googleId,
+        loginDto.googleIdToken,
+        loginDto.name,
       );
 
       if (!user || user.userType !== loginDto.userType) {
-        throw new UnauthorizedException('The email address or password is incorrect.');
+        throw new UnauthorizedException(
+          "The email address or password is incorrect.",
+        );
       }
 
       if (!user.isActive) {
-        throw new UnauthorizedException('Your account has been blocked. Please contact support for assistance.');
+        throw new UnauthorizedException(
+          "Your account has been blocked. Please contact support for assistance.",
+        );
       }
 
       const payload = { userId: user.id, type: user.userType };
@@ -120,14 +127,47 @@ export class AuthService {
     email: string,
     password?: string,
     googleId?: string,
+    googleIdToken?: string,
+    name?: string,
   ): Promise<any> {
+    if (googleId) {
+      if (!googleIdToken) {
+        throw new BadRequestException(
+          "Google Id Token is required when login with google.",
+        );
+      }
+
+      let user = await this.userService.findByGoogleId(googleId);
+      if (user) {
+        if (user.email.toLowerCase() === email.toLowerCase()) {
+          return user;
+        }
+
+        throw new UnauthorizedException(
+          "Google Id already exists with different email.",
+        );
+      }
+
+      user = await this.userService.findByEmail(email.toLowerCase());
+      if (user) {
+        return user;
+      }
+
+      return await this.userService.createUser(
+        {
+          email: email.toLowerCase(),
+          googleId: googleId,
+          fullName: name,
+        },
+        UserType.User,
+      );
+    }
+
     const user = await this.userService.findByEmail(email.toLowerCase());
     if (!user) {
       return undefined;
     }
-    if (googleId && user.googleId === googleId) {
-      return user;
-    }
+
     return await this.userService.checkPassword(user, password);
   }
 

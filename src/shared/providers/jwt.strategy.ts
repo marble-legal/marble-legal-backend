@@ -25,7 +25,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Your account has been blocked. Please contact support for assistance.');
+      throw new UnauthorizedException(
+        "Your account has been blocked. Please contact support for assistance.",
+      );
     }
 
     return user;

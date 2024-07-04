@@ -7,4 +7,6 @@ export class LoginAuthDto {
   password?: string;
   userType: UserType;
   googleId?: string;
+  googleIdToken?: string;
+  name?: string;
 }
