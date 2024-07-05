@@ -166,12 +166,16 @@ export class SubscriptionService {
         url: session.url,
       };
     } else {
+      const subscriptionsCount = await this.userSubscriptionsRepository.countBy({
+        userId: id
+      })
       const session = await this.stripeService.fetchCheckoutUrl(
         getStripeConnectUrlDto.tier,
         getStripeConnectUrlDto.planType,
         getStripeConnectUrlDto.redirectUrl,
         id,
         user.email,
+        subscriptionsCount === 0
       );
 
       const params = {
@@ -569,10 +573,6 @@ export class SubscriptionService {
           return;
         }
 
-        const user = await this.usersRepository.findOneBy({
-          id: subscription.userId,
-        });
-
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(
@@ -652,10 +652,6 @@ export class SubscriptionService {
           return;
         }
 
-        const user = await this.usersRepository.findOneBy({
-          id: subscription.userId,
-        });
-
         try {
           await Promise.all([
             this.userSubscriptionsRepository.update(
@@ -717,7 +713,13 @@ export class SubscriptionService {
             Tier.SOLO_PRACTITIONER,
         };
 
-        const priceId = event.data.object.lines.data[0].plan.id;
+        const lineItems = event.data.object?.lines?.data ?? []
+
+        if (lineItems.length === 0) {
+          return
+        }
+
+        const priceId = lineItems[lineItems.length - 1].plan?.id;
         let tier = MonthlyPriceTierMap[priceId];
         let planType = PlanType.MONTHLY;
         if (tier === undefined) {
@@ -765,6 +767,30 @@ export class SubscriptionService {
         } else if (data.object.canceled_at) {
           cancelledAt = new Date(0);
           cancelledAt.setUTCSeconds(data.object.canceled_at);
+        }
+
+        if (data.object.trial_end && data.object.trial_end > Math.floor(Date.now() / 1000)) {
+          console.log('Subscription was in trial period at the time of deletion.');
+          const user = await this.usersRepository.findOneBy(
+            {
+              stripeCustomerId: data.object.customer,
+            }
+          )
+          if (user) {
+            const subscriptionsCount = await this.userCustomPlansRepository.countBy({
+              userId: user.id,
+              isActive: true,
+              status: UserCustomPlanStatus.Paid
+            })
+            if (subscriptionsCount === 0) {
+              await this.usersRepository.update({
+                id: user.id,
+              }, {
+                currentCredit: []
+              })
+            }
+          }
+          
         }
 
         try {

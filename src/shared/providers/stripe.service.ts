@@ -12,6 +12,7 @@ export class StripeService {
     redirectUrl: string,
     userId: string,
     email: string,
+    isTrialProvided: boolean
   ) {
     const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
     const priceId = this.fetchPriceId(tier, planType);
@@ -27,6 +28,8 @@ export class StripeService {
       client_reference_id: userId,
       metadata: {
         userId,
+        tier,
+        planType
       },
       customer_email: email,
       success_url: `${redirectUrl}?session_id={CHECKOUT_SESSION_ID}`,
@@ -35,7 +38,7 @@ export class StripeService {
       //   enabled: true,
       // },
       subscription_data: {
-        trial_period_days: 1,
+        trial_period_days: isTrialProvided ? 1 : undefined,
       },
       // cancel_url: 'https://example.com/canceled.html',
     });
