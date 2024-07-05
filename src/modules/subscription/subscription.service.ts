@@ -521,6 +521,8 @@ export class SubscriptionService {
             },
             {
               stripeCustomerId: data.object.customer,
+              planType: data.object.metadata?.planType,
+              tier: data.object.metadata?.tier,
             },
           ),
         ]);
