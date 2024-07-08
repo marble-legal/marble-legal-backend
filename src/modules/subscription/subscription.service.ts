@@ -731,9 +731,21 @@ export class SubscriptionService {
           planType = PlanType.YEARLY;
         }
 
+        const subscriptionsCount =
+          await this.userSubscriptionsRepository.countBy({
+            userId: user.id,
+          });
+
+        const trialLines = lineItems.some((line) => {
+          return line.description?.toLowerCase()?.includes("trial") ?? false;
+        });
+
+        const isTrialPeriod = trialLines > 0;
+
         const currentCredits = this.provideLatestCredit(
           tier,
           user.currentCredit ?? [],
+          isTrialPeriod,
         );
 
         await Promise.all([
@@ -833,12 +845,16 @@ export class SubscriptionService {
     }
   }
 
-  provideLatestCredit(tier: Tier, currentCredit: any[]) {
+  provideLatestCredit(
+    tier: Tier,
+    currentCredit: any[],
+    isTrialPeriod: boolean,
+  ) {
     const creditsPerPlan = {
       [Tier.INDIVIDUAL]: {
-        [Feature.AIAssistance]: 10,
-        [Feature.ContractAnalysis]: 2,
-        [Feature.ContractDrafting]: 2,
+        [Feature.AIAssistance]: isTrialPeriod ? 2 : 10,
+        [Feature.ContractAnalysis]: isTrialPeriod ? 1 : 2,
+        [Feature.ContractDrafting]: isTrialPeriod ? 1 : 2,
       },
     };
 
