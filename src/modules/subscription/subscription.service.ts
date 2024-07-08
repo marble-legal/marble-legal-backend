@@ -615,13 +615,16 @@ export class SubscriptionService {
         const data = event.data;
 
         const subscriptionStatus =
-          data.object.cancel_at === null
+          data.object.cancel_at === null && data.object.canceled_at === null
             ? UserSubscriptionStatus.Paid
             : UserSubscriptionStatus.Cancelled;
         let cancelledAt = undefined;
         if (data.object.cancel_at) {
           cancelledAt = new Date(0);
           cancelledAt.setUTCSeconds(data.object.cancel_at);
+        } else if (data.object.canceled_at) {
+          cancelledAt = new Date(0);
+          cancelledAt.setUTCSeconds(data.object.canceled_at);
         }
 
         const MonthlyPriceTierMap = {
@@ -677,9 +680,14 @@ export class SubscriptionService {
                 id: subscription.userId,
               },
               {
-                tier: tier,
-                planType: planType,
-                // currentCredit: currentCredits,
+                tier:
+                  subscriptionStatus === UserSubscriptionStatus.Cancelled
+                    ? null
+                    : tier,
+                planType:
+                  subscriptionStatus === UserSubscriptionStatus.Cancelled
+                    ? null
+                    : planType,
               },
             ),
           ]);
