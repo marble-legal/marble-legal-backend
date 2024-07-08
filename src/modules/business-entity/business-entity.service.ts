@@ -1,21 +1,33 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateBusinessEntityDto } from "./dto/create-business-entity.dto";
 import { UpdateBusinessEntityDto } from "./dto/update-business-entity.dto";
-import { BusinessEntity } from "./entities/business-entity.entity";
+import {
+  BusinessEntity,
+  businessEntityStatusMapper,
+} from "./entities/business-entity.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 import { SubscriptionService } from "../subscription/subscription.service";
 import { Feature } from "../users/entities/user-custom-plan.entity";
 import { GetBusinessEntitiesDto } from "./dto/get-business-entities.dto";
 import { BusinessEntityDataRepository } from "./business-entity.repository";
+import { EmailService } from "src/shared/providers/email.service";
+import { User } from "../users/entities/user.entity";
 
 @Injectable()
 export class BusinessEntityService {
   constructor(
     @InjectRepository(BusinessEntity)
     private businessEnitiesRepository: Repository<BusinessEntity>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
     private readonly subscriptionService: SubscriptionService,
     private readonly businessEntityDataRepository: BusinessEntityDataRepository,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(createBusinessEntityDto: CreateBusinessEntityDto) {
@@ -81,14 +93,35 @@ export class BusinessEntityService {
   }
 
   async update(id: string, updateBusinessEntityDto: UpdateBusinessEntityDto) {
-    await this.businessEnitiesRepository.update(
-      {
-        id: id,
-      },
-      {
-        status: updateBusinessEntityDto.status,
-      },
-    );
+    const businessEntity = await this.businessEnitiesRepository.findOneBy({
+      id: id,
+    });
+
+    if (!businessEntity) {
+      throw new NotFoundException("Business Entity not found");
+    }
+
+    const [user] = await Promise.all([
+      this.usersRepository.findOneBy({
+        id: businessEntity.userId,
+      }),
+      this.businessEnitiesRepository.update(
+        {
+          id: id,
+        },
+        {
+          status: updateBusinessEntityDto.status,
+        },
+      ),
+    ]);
+
+    if (user.isEmailNotificationOn) {
+      await this.emailService.sendEmail({
+        toEmailIds: [user.email],
+        subject: "Updates on your Business Entity",
+        body: `The status of your business Entity titled: ${businessEntity.name} has been updated to ${businessEntityStatusMapper[updateBusinessEntityDto.status]}`,
+      });
+    }
 
     return {
       message: "Business Entity updated successfully",

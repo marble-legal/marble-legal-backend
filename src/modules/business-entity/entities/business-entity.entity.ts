@@ -7,6 +7,12 @@ export enum BusinessEntityStatus {
   Refused = -1,
 }
 
+export const businessEntityStatusMapper = {
+  [BusinessEntityStatus.Completed]: "Completed",
+  [BusinessEntityStatus.InProgress]: "In progress",
+  [BusinessEntityStatus.Refused]: "Refused",
+};
+
 class BusinessEntityClient {
   name: string;
   address: string;

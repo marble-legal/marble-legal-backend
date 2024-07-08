@@ -166,16 +166,18 @@ export class SubscriptionService {
         url: session.url,
       };
     } else {
-      const subscriptionsCount = await this.userSubscriptionsRepository.countBy({
-        userId: id
-      })
+      const subscriptionsCount = await this.userSubscriptionsRepository.countBy(
+        {
+          userId: id,
+        },
+      );
       const session = await this.stripeService.fetchCheckoutUrl(
         getStripeConnectUrlDto.tier,
         getStripeConnectUrlDto.planType,
         getStripeConnectUrlDto.redirectUrl,
         id,
         user.email,
-        subscriptionsCount === 0
+        subscriptionsCount === 0,
       );
 
       const params = {
@@ -715,10 +717,10 @@ export class SubscriptionService {
             Tier.SOLO_PRACTITIONER,
         };
 
-        const lineItems = event.data.object?.lines?.data ?? []
+        const lineItems = event.data.object?.lines?.data ?? [];
 
         if (lineItems.length === 0) {
-          return
+          return;
         }
 
         const priceId = lineItems[lineItems.length - 1].plan?.id;
@@ -771,28 +773,34 @@ export class SubscriptionService {
           cancelledAt.setUTCSeconds(data.object.canceled_at);
         }
 
-        if (data.object.trial_end && data.object.trial_end > Math.floor(Date.now() / 1000)) {
-          console.log('Subscription was in trial period at the time of deletion.');
-          const user = await this.usersRepository.findOneBy(
-            {
-              stripeCustomerId: data.object.customer,
-            }
-          )
+        if (
+          data.object.trial_end &&
+          data.object.trial_end > Math.floor(Date.now() / 1000)
+        ) {
+          console.log(
+            "Subscription was in trial period at the time of deletion.",
+          );
+          const user = await this.usersRepository.findOneBy({
+            stripeCustomerId: data.object.customer,
+          });
           if (user) {
-            const subscriptionsCount = await this.userCustomPlansRepository.countBy({
-              userId: user.id,
-              isActive: true,
-              status: UserCustomPlanStatus.Paid
-            })
+            const subscriptionsCount =
+              await this.userCustomPlansRepository.countBy({
+                userId: user.id,
+                isActive: true,
+                status: UserCustomPlanStatus.Paid,
+              });
             if (subscriptionsCount === 0) {
-              await this.usersRepository.update({
-                id: user.id,
-              }, {
-                currentCredit: []
-              })
+              await this.usersRepository.update(
+                {
+                  id: user.id,
+                },
+                {
+                  currentCredit: [],
+                },
+              );
             }
           }
-          
         }
 
         try {

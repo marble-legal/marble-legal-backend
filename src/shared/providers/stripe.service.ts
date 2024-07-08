@@ -12,7 +12,7 @@ export class StripeService {
     redirectUrl: string,
     userId: string,
     email: string,
-    isTrialProvided: boolean
+    isTrialProvided: boolean,
   ) {
     const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
     const priceId = this.fetchPriceId(tier, planType);
@@ -29,7 +29,7 @@ export class StripeService {
       metadata: {
         userId,
         tier,
-        planType
+        planType,
       },
       customer_email: email,
       success_url: `${redirectUrl}?session_id={CHECKOUT_SESSION_ID}`,
