@@ -62,6 +62,7 @@ export class ConversationsService {
             .filter((conv) => !conv.isUserMessage)
             .map((conv) => conv.message),
         },
+        juridiction: createConversationDto.juridiction,
       },
       {
         headers: {

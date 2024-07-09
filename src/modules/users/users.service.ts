@@ -118,6 +118,7 @@ export class UsersService {
         totalAnalysis: totalAnalysis,
         isActive: user.isActive,
         currentCredit: user.currentCredit,
+        juridiction: user.juridiction,
       };
     } catch (err: any) {
       throw err;
@@ -158,6 +159,10 @@ export class UsersService {
 
     if (requestParams.isEmailNotificationOn !== undefined) {
       params["isEmailNotificationOn"] = requestParams.isEmailNotificationOn;
+    }
+
+    if (requestParams.juridiction !== undefined) {
+      params["juridiction"] = requestParams.juridiction;
     }
 
     await this.usersRepository.update(

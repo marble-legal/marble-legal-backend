@@ -77,4 +77,7 @@ export class User extends Base {
 
   @Column("simple-json", { nullable: true })
   currentCredit?: any;
+
+  @Column({ nullable: true })
+  juridiction?: string;
 }
