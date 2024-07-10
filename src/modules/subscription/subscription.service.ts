@@ -739,12 +739,7 @@ export class SubscriptionService {
           planType = PlanType.YEARLY;
         }
 
-        const subscriptionsCount =
-          await this.userSubscriptionsRepository.countBy({
-            userId: user.id,
-          });
-
-        const trialLines = lineItems.some((line) => {
+        const trialLines = lineItems.filter((line) => {
           return line.description?.toLowerCase()?.includes("trial") ?? false;
         });
 

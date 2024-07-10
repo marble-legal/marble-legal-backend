@@ -27,4 +27,7 @@ export class Conversation extends Base {
 
   @Column("simple-json", { nullable: true })
   sourceDocuments?: any;
+
+  @Column({ default: false })
+  isFollowUp: boolean;
 }

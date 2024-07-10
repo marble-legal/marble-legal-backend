@@ -36,6 +36,12 @@ export class ConversationsService {
       take: 16,
     });
 
+    const aiConversations = previousConversations.filter(
+      (conv) => !conv.isUserMessage,
+    );
+    const isFollowUp =
+      aiConversations.length > 0 ? aiConversations[0].isFollowUp : false;
+
     const latestConversations = previousConversations.reverse();
 
     console.log("latestConversations", latestConversations);
@@ -63,6 +69,7 @@ export class ConversationsService {
             .map((conv) => conv.message),
         },
         juridiction: createConversationDto.juridiction,
+        followup_flag: isFollowUp,
       },
       {
         headers: {
@@ -73,6 +80,7 @@ export class ConversationsService {
 
     const message = response.data.answer;
     const sourceDocuments = response.data?.source_documents;
+    const followUp = response.data?.follow_up;
 
     await this.conversationsRepository.insert({
       userId: userId,
@@ -85,6 +93,7 @@ export class ConversationsService {
       message: message,
       isUserMessage: false,
       sourceDocuments: sourceDocuments,
+      isFollowUp: followUp,
     });
 
     await this.subscriptionService.deductCreditOnUsingFeature(
