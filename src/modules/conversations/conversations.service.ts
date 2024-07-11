@@ -7,6 +7,7 @@ import { UpdateConversationDto } from "./dto/update-conversation.dto";
 import axios from "axios";
 import { SubscriptionService } from "../subscription/subscription.service";
 import { Feature } from "../users/entities/user-custom-plan.entity";
+import { GetConversationsDto } from "./dto/get-conversations.dto";
 
 @Injectable()
 export class ConversationsService {
@@ -31,6 +32,7 @@ export class ConversationsService {
     const previousConversations = await this.conversationsRepository.find({
       where: {
         userId: userId,
+        jurisdiction: createConversationDto.juridiction,
       },
       order: { createdAt: "DESC" },
       take: 16,
@@ -86,6 +88,7 @@ export class ConversationsService {
       userId: userId,
       message: createConversationDto.message,
       isUserMessage: true,
+      jurisdiction: createConversationDto.juridiction,
     });
 
     await this.conversationsRepository.insert({
@@ -94,6 +97,7 @@ export class ConversationsService {
       isUserMessage: false,
       sourceDocuments: sourceDocuments,
       isFollowUp: followUp,
+      jurisdiction: createConversationDto.juridiction,
     });
 
     await this.subscriptionService.deductCreditOnUsingFeature(
@@ -107,15 +111,19 @@ export class ConversationsService {
     };
   }
 
-  async findAll(userId: string, contractId?: string) {
+  async findAll(userId: string, getConversationsDto: GetConversationsDto) {
     const params = {
       userId: userId,
     };
 
-    if (contractId) {
-      params["contractId"] = contractId;
+    if (getConversationsDto.contractId) {
+      params["contractId"] = getConversationsDto.contractId;
     } else {
       params["contractId"] = IsNull();
+    }
+
+    if (getConversationsDto.jurisdiction) {
+      params["jurisdiction"] = getConversationsDto.jurisdiction;
     }
 
     return await this.conversationsRepository.find({

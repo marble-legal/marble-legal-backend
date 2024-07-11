@@ -30,4 +30,7 @@ export class Conversation extends Base {
 
   @Column({ default: false })
   isFollowUp: boolean;
+
+  @Column({ nullable: true })
+  jurisdiction?: string;
 }

@@ -45,7 +45,7 @@ export class ConversationsController {
     }
     return this.conversationsService.findAll(
       getConversationsDto.userId,
-      getConversationsDto.contractId,
+      getConversationsDto,
     );
   }
 
