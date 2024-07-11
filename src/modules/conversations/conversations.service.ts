@@ -68,8 +68,8 @@ export class ConversationsService {
             .filter((conv) => !conv.isUserMessage)
             .map((conv) => conv.message),
         },
-        juridiction: createConversationDto.juridiction,
-        followup_flag: isFollowUp,
+        jurisdiction: createConversationDto.juridiction,
+        follow_up_flag: isFollowUp,
       },
       {
         headers: {
