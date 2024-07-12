@@ -743,7 +743,7 @@ export class SubscriptionService {
           return line.description?.toLowerCase()?.includes("trial") ?? false;
         });
 
-        const isTrialPeriod = trialLines > 0;
+        const isTrialPeriod = trialLines.length > 0;
 
         const currentCredits = this.provideLatestCredit(
           tier,
