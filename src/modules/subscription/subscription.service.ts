@@ -303,17 +303,18 @@ export class SubscriptionService {
 
     const credit = Number.parseInt(currentCredit[featureIndex].quantity);
 
-    // if (feature === Feature.AIAssistance) {
-    //   const aiAssistantCreditMonths = credit;
-    //   const validDate = new Date(subscription.createdAt);
-    //   validDate.setMonth(validDate.getMonth() + aiAssistantCreditMonths);
+    if (
+      feature === Feature.AIAssistance &&
+      currentCredit[featureIndex].type === "month"
+    ) {
+      const validDate = new Date(currentCredit[featureIndex].date);
 
-    //   if (validDate >= new Date()) {
-    //     return true;
-    //   }
+      if (validDate >= new Date()) {
+        return true;
+      }
 
-    //   return false;
-    // }
+      return false;
+    }
 
     if (credit <= 0) {
       return false;
@@ -360,6 +361,12 @@ export class SubscriptionService {
       {
         currentCredit: currentCredit.map((credit) => {
           if (credit.feature === feature) {
+            if (feature === Feature.AIAssistance && credit.type === "month") {
+              return {
+                feature: credit.feature,
+                quantity: credit.quantity,
+              };
+            }
             return {
               feature: credit.feature,
               quantity: `${Number.parseInt(credit.quantity) - 1}`,
@@ -435,9 +442,23 @@ export class SubscriptionService {
               currentCredit?.findIndex(
                 (currentCredit) => currentCredit.feature === credit.feature,
               ) ?? -1;
+            const feature = currentCredit[creditIndex].feature;
 
             if (creditIndex === -1) {
-              currentCredit.push(credit);
+              if (feature === Feature.AIAssistance) {
+                const now = new Date();
+                currentCredit.push({
+                  ...credit,
+                  type: "month",
+                  date: new Date(
+                    now.setMonth(
+                      now.getMonth() + Number.parseInt(credit.quantity),
+                    ),
+                  ),
+                });
+              } else {
+                currentCredit.push(credit);
+              }
             } else {
               currentCredit[creditIndex].quantity = `${
                 Number.parseInt(currentCredit[creditIndex].quantity) +
@@ -445,14 +466,21 @@ export class SubscriptionService {
               }`;
 
               if (currentCredit[creditIndex].feature === Feature.AIAssistance) {
-                const creditDate = new Date(currentCredit[creditIndex].date);
-                creditDate.setMonth(
-                  creditDate.getMonth() + Number.parseInt(credit.quantity),
-                );
-                currentCredit[creditIndex].date =
-                  currentDate > creditDate
-                    ? currentDate
-                    : new Date(currentCredit[creditIndex].date);
+                if (currentCredit[creditIndex].type === "month") {
+                  const creditDate = new Date(currentCredit[creditIndex].date);
+                  creditDate.setMonth(
+                    creditDate.getMonth() + Number.parseInt(credit.quantity),
+                  );
+                  currentCredit[creditIndex].date = creditDate;
+                } else {
+                  const now = new Date();
+                  currentCredit[creditIndex].type = "month";
+                  currentCredit[creditIndex].date = new Date(
+                    now.setMonth(
+                      now.getMonth() + Number.parseInt(credit.quantity),
+                    ),
+                  );
+                }
               } else {
                 currentCredit[creditIndex].date = currentDate;
               }
@@ -910,13 +938,15 @@ export class SubscriptionService {
 
         if (currentCredit[creditIndex].feature === Feature.AIAssistance) {
           const creditDate = new Date(currentCredit[creditIndex].date);
-          creditDate.setMonth(
-            creditDate.getMonth() + Number.parseInt(credit.quantity),
-          );
-          currentCredit[creditIndex].date =
-            currentDate > creditDate
-              ? currentDate
-              : new Date(currentCredit[creditIndex].date);
+
+          if (currentCredit[creditIndex].type === "month") {
+            if (creditDate < new Date()) {
+              currentCredit[creditIndex].type = "query";
+              currentCredit[creditIndex].quantity = `${Number.parseInt(
+                credit.quantity,
+              )}`;
+            }
+          }
         } else {
           currentCredit[creditIndex].date = currentDate;
         }
