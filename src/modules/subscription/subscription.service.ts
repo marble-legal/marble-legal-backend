@@ -442,10 +442,9 @@ export class SubscriptionService {
               currentCredit?.findIndex(
                 (currentCredit) => currentCredit.feature === credit.feature,
               ) ?? -1;
-            const feature = currentCredit[creditIndex].feature;
 
             if (creditIndex === -1) {
-              if (feature === Feature.AIAssistance) {
+              if (credit.feature === Feature.AIAssistance) {
                 const now = new Date();
                 currentCredit.push({
                   ...credit,
