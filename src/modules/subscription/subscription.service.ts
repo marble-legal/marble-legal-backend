@@ -204,6 +204,7 @@ export class SubscriptionService {
     const user = await this.usersRepository.findOneBy({
       id: id,
     });
+    console.log(user)
     const session = await this.stripeService.fetchCustomerPortalUrl(
       user.stripeCustomerId,
       getStripeCustomerPortalUrlDto.redirectUrl,
@@ -492,6 +493,7 @@ export class SubscriptionService {
             data.object.payment_status === "paid"
               ? UserCustomPlanStatus.Paid
               : UserCustomPlanStatus.Cancelled;
+
           await Promise.all([
             this.usersRepository.update(
               {
@@ -499,7 +501,6 @@ export class SubscriptionService {
               },
               {
                 tier: user.tier ?? Tier.CUSTOMISED,
-                stripeCustomerId: data.object.customer,
                 planType: user.planType ?? PlanType.MONTHLY,
                 currentCredit: currentCredit,
               },
