@@ -365,6 +365,8 @@ export class SubscriptionService {
               return {
                 feature: credit.feature,
                 quantity: credit.quantity,
+                type: 'month',
+                date: credit.date,
               };
             }
             return {
