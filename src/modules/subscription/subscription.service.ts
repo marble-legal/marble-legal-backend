@@ -278,7 +278,7 @@ export class SubscriptionService {
       id: userId,
     });
 
-    if (!user.isActive || !user.tier) {
+    if (!user.isActive) {
       return false;
     }
 
