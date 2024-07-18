@@ -410,7 +410,7 @@ export class UsersService {
           id: id,
         },
         {
-          email: user.updateEmail,
+          email: user.updateEmail.toLowerCase(),
           isEmailVerified: true,
         },
       );
