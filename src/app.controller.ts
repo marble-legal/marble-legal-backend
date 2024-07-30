@@ -3,6 +3,7 @@ import { AppService } from "./app.service";
 import { ApiTags } from "@nestjs/swagger";
 import { UsersService } from "./modules/users/users.service";
 import { SubscriptionService } from "./modules/subscription/subscription.service";
+import { ContactUsDto } from "./dto/contact-us.dto";
 
 @ApiTags("Basic")
 @Controller()
@@ -29,5 +30,10 @@ export class AppController {
       req.rawBody,
       req.headers["stripe-signature"],
     );
+  }
+
+  @Post("/contact-us")
+  async handleContactUs(@Body() contactUsDto: ContactUsDto) {
+    await this.appService.contactUs(contactUsDto.email);
   }
 }

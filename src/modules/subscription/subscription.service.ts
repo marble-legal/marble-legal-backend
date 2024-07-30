@@ -204,7 +204,7 @@ export class SubscriptionService {
     const user = await this.usersRepository.findOneBy({
       id: id,
     });
-    console.log(user)
+    console.log(user);
     const session = await this.stripeService.fetchCustomerPortalUrl(
       user.stripeCustomerId,
       getStripeCustomerPortalUrlDto.redirectUrl,
@@ -366,7 +366,7 @@ export class SubscriptionService {
               return {
                 feature: credit.feature,
                 quantity: credit.quantity,
-                type: 'month',
+                type: "month",
                 date: credit.date,
               };
             }
