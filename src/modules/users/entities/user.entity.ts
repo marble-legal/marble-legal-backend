@@ -25,8 +25,8 @@ export enum Tier {
 
 @Entity()
 export class User extends Base {
-  @Column()
-  fullName: string;
+  @Column({nullable: true})
+  fullName?: string;
 
   @Column()
   email: string;
