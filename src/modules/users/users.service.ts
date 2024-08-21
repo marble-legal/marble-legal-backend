@@ -229,11 +229,11 @@ export class UsersService {
       throw new BadRequestException("Password must contain at least 1 number.");
     }
 
-    if (password.search(/[!@#\$%\^&\*_?]/) < 0) {
-      throw new BadRequestException(
-        "Password must contain at least 1 special character.",
-      );
-    }
+    // if (password.search(/[!@#-\$%\^&\*_?]/) < 0) {
+    //   throw new BadRequestException(
+    //     "Password must contain at least 1 special character.",
+    //   );
+    // }
   }
 
   async validateEmail(email: string) {
