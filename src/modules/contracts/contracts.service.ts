@@ -128,7 +128,18 @@ export class ContractsService {
     try {
       const browser = await puppeteer.launch({
         headless: "new",
-        args: ["--no-sandbox", "--disable-dev-shm-usage"],
+        args: [
+          "--window-size=1920,1080",
+          "--disable-gpu",
+          "--disable-features=IsolateOrigins,site-per-process",
+          "-–disable-blink-features=AutomationControlled",
+          "--blink-settings=imagesEnabled=true",
+          "--enable-features=NetworkService",
+          "--disable-dev-shm-usage",
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+        ],
+        protocolTimeout: 0,
       });
       const page = await browser.newPage();
 
