@@ -146,7 +146,7 @@ export class ContractsService {
       // Close the browser
       await browser.close();
     } catch (error) {
-      throw error;
+      console.error(error);
     }
   }
 
