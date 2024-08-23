@@ -38,7 +38,7 @@ export class StripeService {
       //   enabled: true,
       // },
       subscription_data: {
-        trial_period_days: isTrialProvided ? 1 : undefined,
+        trial_period_days: isTrialProvided ? 7 : undefined,
       },
       // cancel_url: 'https://example.com/canceled.html',
     });
