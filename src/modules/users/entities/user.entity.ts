@@ -25,7 +25,7 @@ export enum Tier {
 
 @Entity()
 export class User extends Base {
-  @Column({nullable: true})
+  @Column({ nullable: true })
   fullName?: string;
 
   @Column()
@@ -80,4 +80,7 @@ export class User extends Base {
 
   @Column({ nullable: true })
   juridiction?: string;
+
+  @Column({ default: false })
+  isAcceptedTnc?: boolean;
 }

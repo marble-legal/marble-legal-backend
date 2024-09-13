@@ -119,6 +119,7 @@ export class UsersService {
         isActive: user.isActive,
         currentCredit: user.currentCredit,
         juridiction: user.juridiction,
+        isAcceptedTnc: user.isAcceptedTnc,
       };
     } catch (err: any) {
       throw err;
@@ -163,6 +164,10 @@ export class UsersService {
 
     if (requestParams.juridiction !== undefined) {
       params["juridiction"] = requestParams.juridiction;
+    }
+
+    if (requestParams.isAcceptedTnc !== undefined) {
+      params["isAcceptedTnc"] = requestParams.isAcceptedTnc;
     }
 
     await this.usersRepository.update(

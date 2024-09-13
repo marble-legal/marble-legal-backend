@@ -3,4 +3,5 @@ export class UpdateUserDto {
   profileImg?: string;
   isEmailNotificationOn?: boolean;
   juridiction?: string;
+  isAcceptedTnc?: boolean;
 }
