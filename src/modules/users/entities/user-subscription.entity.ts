@@ -6,6 +6,7 @@ export enum UserSubscriptionStatus {
   Initiated = "Initiated",
   Paid = "Paid",
   Cancelled = "Cancelled",
+  PastDue = "PastDue",
 }
 
 @Entity()

@@ -644,7 +644,7 @@ export class SubscriptionService {
       case "customer.subscription.updated": {
         const data = event.data;
 
-        const subscriptionStatus =
+        let subscriptionStatus =
           data.object.cancel_at === null && data.object.canceled_at === null
             ? UserSubscriptionStatus.Paid
             : UserSubscriptionStatus.Cancelled;
@@ -655,6 +655,10 @@ export class SubscriptionService {
         } else if (data.object.canceled_at) {
           cancelledAt = new Date(0);
           cancelledAt.setUTCSeconds(data.object.canceled_at);
+        }
+
+        if (data.object?.status?.toLowerCase() === "past_due") {
+          subscriptionStatus = UserSubscriptionStatus.PastDue;
         }
 
         const MonthlyPriceTierMap = {
